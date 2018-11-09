@@ -22,7 +22,6 @@ def largestprimefactor(n):
 
 	while remainder != 1:
 		for i in primes:
-			print(i)
 			if remainder % i == 0:
 				divisors.append(i)
 				remainder = int(remainder/i)

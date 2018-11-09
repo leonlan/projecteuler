@@ -18,7 +18,7 @@ def prime(n):
 		return False
 
 	# Case 2: n is odd	
-	for i in range(3, ceil(sqrt(n)), 2):
+	for i in range(3, ceil(sqrt(n))+1, 2):
 		if n % i == 0:
 			return False
 
