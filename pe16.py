@@ -1,3 +1,5 @@
+import numpy as np
+
 """
 Problem:
 https://projecteuler.net/problem=16
