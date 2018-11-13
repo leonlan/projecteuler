@@ -43,3 +43,21 @@ def primelist(n, length=False):
 				primes.append(j)
 			j += 1
 	return(primes)
+
+
+def properdivisors(n):
+	"""Returns the list of proper divisors of n."""
+	propdiv = [1]
+
+	for i in range(2, ceil(sqrt(n))):
+		if n%i == 0:
+			propdiv.extend([i, n//i])
+
+	# If n is a perfect square, also add the square root.
+	# Note: this does not work for VERY LARGE n. 
+	if sqrt(n).is_integer() and n != 1:
+		propdiv.append(int(sqrt(n)))
+	
+	return(propdiv)
+	
+
