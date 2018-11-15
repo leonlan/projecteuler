@@ -1,5 +1,7 @@
 from math import ceil, sqrt
-from helperfunctions import *
+import sys
+sys.path.append("..")
+from helperfunctions import prime, primelist
 
 """
 Problem:
@@ -28,3 +30,5 @@ def largestprimefactor(n):
 				break
 
 	return max(divisors)
+
+print(largestprimefactor(600851475143))

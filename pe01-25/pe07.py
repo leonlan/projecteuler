@@ -1,3 +1,5 @@
+import sys
+sys.path.append('..')
 from helperfunctions import prime, primelist
 """
 Problem: 
