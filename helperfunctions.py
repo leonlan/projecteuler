@@ -24,20 +24,20 @@ def prime(n):
 
 	return True
 	
-def primelist(n, length=False):
-	"""Returns the list of primes up to n. 
+def primelist(n, start=3, length=False):
+	"""Returns the list of primes up to n (starting from start). 
 	If length = TRUE, return the first n prime numbers."""
 	primes = [2]
 	
 	# Case 1: all primes up to n.
 	if not length:
-		for i in range(3, n+1, 2):
+		for i in range(start, n+1, 2):
 			if prime(i):
 				primes.append(i)
 
 	# Case 2: the first n prime numbers.
 	else:
-		j = 3
+		j = start
 		while len(primes) < n:
 			if prime(j):
 				primes.append(j)
@@ -60,4 +60,18 @@ def properdivisors(n):
 	
 	return(propdiv)
 	
+
+
+"""
+Uncategorized helperfunctions
+"""
+
+def sort(n, integer=False):
+    """Takes a string/integer as input and lexicographically sorts it.
+	If integer is True, it returns it as integer type."""
+    x = ''.join(sorted(str(n)))
+    if integer:
+        return(int(x))
+    else:
+        return(x)
 
