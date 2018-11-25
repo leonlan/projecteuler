@@ -12,9 +12,16 @@ Prime numbers
 
 def prime(n):
 	"""Returns whether n is prime or not."""
+	# Case 0: n is 0, 1 or negative
+	if n < 2:
+		return False
 	
+	# Case 1: n = 2
+	elif n == 2:
+		return True
+
 	# Case 1: n is even
-	if n % 2 == 0:
+	elif n % 2 == 0:
 		return False
 
 	# Case 2: n is odd	
@@ -24,11 +31,19 @@ def prime(n):
 
 	return True
 	
-def primelist(n, start=3, length=False):
-	"""Returns the list of primes up to n (starting from start). 
+def primelist(n, start=2, length=False):
+	"""Returns the list of primes up to n (starting from start=3). 
 	If length = TRUE, return the first n prime numbers."""
-	primes = [2]
+	# Separate case for 2 since it is even
+	if start > 2:
+		primes = []
+	else:
+		primes = [2]
 	
+	# Primes cannot be even
+	if start % 2 == 0:
+		start += 1
+
 	# Case 1: all primes up to n.
 	if not length:
 		for i in range(start, n+1, 2):
@@ -41,7 +56,7 @@ def primelist(n, start=3, length=False):
 		while len(primes) < n:
 			if prime(j):
 				primes.append(j)
-			j += 1
+			j += 2
 	return(primes)
 
 
