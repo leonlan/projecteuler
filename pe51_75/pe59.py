@@ -17,7 +17,7 @@ from pathlib import Path
 
 
 # Top 1000 words in English dictionary
-data_folder = Path("..")
+data_folder = Path("../resources")
 en_dict = open(data_folder / "top1000words.txt", "r").read().splitlines()
 
 
