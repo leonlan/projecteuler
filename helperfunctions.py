@@ -5,6 +5,7 @@ Todo:
 """
 
 from math import ceil, sqrt
+from collections import Counter
 
 
 def prime(n):
@@ -129,3 +130,19 @@ def gcd(a, b):
 def lcm(a, b):
     """TODO"""
     return(None)
+
+
+def is_permutation(a, b):
+    """Checks if a is a permutation of b."""
+    a, b = str(a), str(b)
+    return(len(a) == len(b) and Counter(a) == Counter(b))
+
+
+def reverse(n):
+    """Returns the reverse of n."""
+    return(int(str(n)[::-1]))
+
+
+def is_palindrome(n):
+    """Checks if n is palindromic."""
+    return(n == reverse(n))
