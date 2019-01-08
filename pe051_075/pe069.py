@@ -24,7 +24,7 @@ from helperfunctions import gcd, prime, prime_factors
 from math import sqrt
 
 
-def totient(n):
+def totient_gcd(n):
     """Determines the number of numbers less than n which are relatively
     prime to n. Also called the Euler's Totient function, or phi funciton."""
     # All numbers smaller than n are relatively prime to n if n is prime
