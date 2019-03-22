@@ -1,6 +1,3 @@
-import sys
-sys.path.append('..')
-from helperfunctions import prime, primelist
 """
 Problem:
 The sum of the primes below 10 is 2 + 3 + 5 + 7 = 17.
@@ -11,7 +8,9 @@ Solution 1:
 See helperfunctions.py.
 """
 
-print(sum(primelist(2000000)))
+import sys
+sys.path.append('..')
+from helperfunctions import prime, primelist
 
 
 """
@@ -32,6 +31,10 @@ def sieve_of_eratosthenes(n):
 			j += 1
 			try:
 				checks.remove(product)
-			except:
+			except ValueError:
 				pass
 	return([2] + checks)
+
+
+if __name__ == "__main__":
+        print(sum(primelist(2000000)))

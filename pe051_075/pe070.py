@@ -15,7 +15,6 @@ then phi(N) = phi(p1**k1) * phi(p2**k2) * phi(p3**k3) ...
 """
 import sys
 sys.path.append("..")
-from pe069 import totient_product
 from collections import Counter
 from helperfunctions import prime_sieve
 
@@ -29,6 +28,8 @@ def is_permutation(a, b):
 def totient_sieve(N):
     totients = [1]*N
     for p in range(2, N):
+        if p == N-1:
+            print(p)
         # Sieve for each prime number p
         if totients[p] == 1:
             powers = set()

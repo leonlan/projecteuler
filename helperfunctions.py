@@ -1,9 +1,3 @@
-"""
-Todo:
-* gcd
-* lcd
-"""
-
 from math import ceil, sqrt
 from collections import Counter
 
@@ -76,8 +70,13 @@ def prime_sieve(n):
 def properdivisors(n):
     """Returns the list of proper divisors of n."""
     propdiv = [1]
+    start, step = [2, 1]
 
-    for i in range(2, ceil(sqrt(n))):
+    # Odd numbers only have odd divisors
+    if n % 2 == 1:
+        start, step = [3, 2]
+
+    for i in range(start, ceil(sqrt(n)), step):
         if n % i == 0:
             propdiv.extend([i, n//i])
 
@@ -127,9 +126,10 @@ def gcd(a, b):
     return(a)
 
 
-def lcm(a, b):
-    """TODO"""
-    return(None)
+def lcm(x, y):
+    """Finds the largest common multiple of x and y."""
+    lcm = (x*y)//gcd(x,y)
+    return(lcm)
 
 
 def is_permutation(a, b):
