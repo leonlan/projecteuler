@@ -1,0 +1,5 @@
+* Instructions
+Install Go and then run the following command:
+#+BEGIN_SRC
+run go pe###.go
+#+END_SRC
