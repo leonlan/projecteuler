@@ -189,3 +189,5 @@ dmypy.json
 # WIP directories
 */wip/
 */completed/
+wip/
+completed/

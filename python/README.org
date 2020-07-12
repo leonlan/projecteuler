@@ -1,0 +1,5 @@
+* Instruction
+Install Python and run the following command in your terminal:
+#+BEGIN_SRC bash
+python pe###.py
+#+END_SRC

@@ -51,3 +51,8 @@ func PrimeFactorization(n int) map[int]int {
 	}
 	return m
 }
+
+
+func IsPalindrome(n int) bool {
+	// TODO
+}
