@@ -1,0 +1,22 @@
+* Project Euler
+
+** Solved problems
+
+*** Problem 69: Totient maximum
+Can be solved analytically. Otherwise, use a totient sieve.
+
+*** Problem 70: Totient permutation
+Use a totient sieve to solve this problem.
+
+*** Problem 74: Digit factorial chains
+This type of problem is solved using a cache, which keeps track of intermediate results. Without a cache, brute-forcing would be ridiculously expensive.
+
+
+*** Problem 92: Square digit chains
+This type of problem is best solved using a cache.b
+
+** Techniques
+*** Sieving
+*** Dynamic programming
+
+** Type of problems
