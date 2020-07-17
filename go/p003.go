@@ -6,7 +6,7 @@ import . "./euler"
 func max(numbers map[int]int) int {
     var maxNumber int
     for n := range numbers {
-        maxNumber = n
+		maxNumber = n
         break
     }
     for n := range numbers {
