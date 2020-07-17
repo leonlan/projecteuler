@@ -8,11 +8,11 @@ func IsPrime(n int) bool {
 		return false
 	} else if n == 2 {
 		return true
-	} else if n % 2 == 0 {
+	} else if n%2 == 0 {
 		return false
 	} else {
 		for i := 3; i < int(Ceil(Sqrt(float64(n))+1)); i += 2 {
-			if n % i == 0 {
+			if n%i == 0 {
 				return false
 			}
 		}
@@ -33,14 +33,14 @@ func PrimeFactorization(n int) map[int]int {
 		return m
 	}
 
-	for ; total % 2 == 0 ; {
+	for total%2 == 0 {
 		total = total / 2
 		m[2] += 1
 	}
 
 	for i := 3; i < int(Ceil(Sqrt(float64(n))+1)); i += 2 {
-		if IsPrime(i) && total % i == 0 {
-			for ; total % i == 0 ; {
+		if IsPrime(i) && total%i == 0 {
+			for total%i == 0 {
 				total = total / i
 				m[i] += 1
 			}
@@ -51,7 +51,6 @@ func PrimeFactorization(n int) map[int]int {
 	}
 	return m
 }
-
 
 func IsPalindrome(n int) bool {
 	// TODO
