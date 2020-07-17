@@ -1,0 +1,4 @@
+# Project Euler
+This repository contains all my solutions for Project Euler sorted by programming language.
+
+Feel free to add me on Project Euler! My friend key is: 942079_iEDMDDXDe13LYMmzlReee7a2IXghArkI
