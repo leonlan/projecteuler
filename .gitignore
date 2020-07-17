@@ -194,3 +194,6 @@ completed/
 
 # VSCODE
 *.code-workspace
+
+# scripts
+scripts/
