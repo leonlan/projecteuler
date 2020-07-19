@@ -30,7 +30,7 @@ func main() {
 		log.Fatalf("readLines: %s", err)
 	}
 	for _, line := range lines {
-		n, err := strconv.ParseInt(line[:13], 10, 64)
+		n, err := strconv.ParseInt(line[:11], 10, 64)
 		if err != nil {
 			log.Fatalf("strconv: %s", err)
 		}
