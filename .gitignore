@@ -197,3 +197,6 @@ completed/
 
 # scripts
 scripts/
+
+# Ignore markdown files
+explanations/*.md
