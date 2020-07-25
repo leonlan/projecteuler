@@ -1,3 +1,5 @@
+#+OPTIONS: toc:nil
+
 * Explanation
 Consider a summation of 100 12-digit numbers of 1 followed by only 9s. First, we
 consider adding 10 12-digit nines (199 999 999 999), which results in
