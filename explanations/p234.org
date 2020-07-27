@@ -1,0 +1,29 @@
+* Introduction
+The search space is pretty big (checking all numbers up to 999966663333), so any brute force approach that just iterates over all these numbers is not going to work. Initially, I thought that there could be some prime theorem to help us cut-down the search space, but the concepts of /lower prime square root/ and /upper prime square root/ don't ring any bells in my (limited) knowledge of prime theorems. However, noting that we only need to deal with prime-square roots, it should be immediately clear that we dont primes muchl arger than $\sqrt(999966663333) = 999983$. This array of elements seems much more reasonable to work with, so let's investigate how this can be used.
+
+* The primes_array
+Let's call our list of primes the ~primes_array~. The first 5 elements of this list will be ~[2, 3, 5, 7, 11, ...]~. Given some number $n$, we know that $lps(n)$ and $ups(n)$ will be either one single prime or two consecutive primes in the ~primes_array~.
+
+This observation is extremely important. It means that there exists a mapping from $n$ to the ~primes_array~! Let's take a few examples to demonstrate this.
+
+Suppose that we are given $n=4$. Then $lps(4)=ups(4)$, so there is a mapping from $n$ to the first index of the ~primes_array~. I'll jump a few steps ahead, but it should not be too hard to verify: if a number $n$ is a perfect square of a prime number, then $lps(n) = ups(n)$.
+
+Suppose that we are given $n=15$. Taking its square root will yield $3.872...$ and so $lps(15)=3$ and $ups(15)=5$. Another number $n$ with $lps(n)=3$ and $ups(n)=5$ is 12 for example, and you can easily verify that all numbers between $10$ and $24$ have the same pair of $lps$ and $ups$.
+
+Generalizing this observation: given two consecutive primes $p$ and $q$, all integers $n$ in $(p^{2}, q^{2})$ have the same $lps(n)$ and $ups(n)$. Let's call this set of integers $L(p, q)$.
+
+But, wait a second. For large $p$ and $q$, the set $L(p,q)$ is going to be extremely large, which is still not feasible to iterate through. So how can we find a way to shortcut going through most numbers?
+
+* Semidivisibility
+Let's consider $L(3,5)$, which are the integers $10, 11, ..., 24, 25$. How can we check each number for semidivisibility? Actually, that's not the right question to ask, because checking each number will consume too much time for large sets of $L(p,q)$. Instead, we want to find a way to 'generate' all semidivisible numbers in this range of numbers.
+
+To this end, we first repeat the definition of a semi-divisble number: an integer $n\geq 4$ is called /semidivisible/ if one of $lps(n)$ and $ups(n)$ divives $n$, but not both.
+
+An easy but import corollary of this definition is: if a number $n$ is not divisible by either $lps(n)$ or $ups(n)$, then it is not divisble. Using this, we continue with our example.
+
+We know that $lps(n)=3$ and $ups(n)=5$ for each of the numbers $n$ in our set $L(3,5)$. As mentioned before, if $n$ is not divisible by either $3$ or $5$, then it is definitely not semidivisble. The only candidates (for semidivisibility) that remain are numbers that are multiples of either $3$ or $5$. This procedure to find all multiples of $3$ is very simple: we just look for the first element in the range that is divisible by $3$ and keep adding $n$ until we hit the end of the range. Similarly for $5$.
+
+For $L(3, 5)$, the only numbers that are divisble by $3$ are $\{12, 15, 18, 21, 24\}$, whereas the only numbers divisible by $5$ are $\{10, 15, 20, 25\}$. Then the [[https://en.wikipedia.org/wiki/Symmetric_difference][symmetric difference]] of these two sets should give us all semidivisble numbers in $L(3, 5)$.
+
+
+* Tags :primes:4:
