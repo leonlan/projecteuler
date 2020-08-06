@@ -1,0 +1,17 @@
+* Introduction
+This is a 'basic' problem structure, where we are asked to find numbers with two properties:
+1. It must be the sum of a square and a cube expressed in exactly 5 different ways
+2. It must be a palindromic number
+If we were to start with the first property, how do we know which upper bounds to take for the square and cubes? It would be almost impossible, as we could go arbitrarily high. Instead, we start with the palindromic numbers: we generate all the palindromic numbers from smallest to largest and check for each it there exists exactly 4 representations for its square-cube sum.
+
+
+* Generating palindromic numbers
+I'm a bit lazy, so I just checked [[https://stackoverflow.com/questions/16344284/how-to-generate-a-list-of-palindrome-numbers-within-a-given-range#:~:text=A%2520palindrome%2520can%2520be%2520generated,111%2520212%2520313%2520...][StackOverflow]] for a Python function that generates all palindromic numbers. It would be a good exercise to make this function myself, next time.
+
+
+
+* Checking for sums of a square and a cube
+Given a palindromic number, the easiest way to check for square-cube combinations is to iterate over all possible cubes first, as there are way less squares than cubes. By subtracting the cube from the number, it only remains to check whether the remainder is a square.
+
+
+* Tags :twodefs:

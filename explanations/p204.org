@@ -1,0 +1,11 @@
+* Introduction
+I have looked very often at this problen, but I couldn't find an answer. Just now, I finished Problem 201, 249 and 250, which were all solved using dynamic programming, and I think that using dynamic programming might help here too.
+
+* Dynamic programming scheme
+Consider the set of all prime numbers up to 100. Consider ~D[n][s] := 1 if s is a number of type n; 0 otherwise~. So, for $n=2$, we would get for all powers of 2 up to $10^{9}$ a one, and zero otherwise. If we move on to the next prime $n=3$, we do the same procedure as described before. Additionally, we use our 'history' of $s$ such that ~D[2][s] = 1~ and continuously add powers of 3 until we go beyond the upper bound.
+
+The reason why dynamic programming works here is because type $n$ numbers are a subset of type $next(n)$ numbers; it by using the previous subproblem, we maintain correctness of our results. It is similar to problems 201, 249 and 250, because we iteratively use our previous subproblems (i.e., subsets of numbers).
+
+There's one caveat: using arrays here is very inefficient because the arrays are very sparse. Moreover, because we dont need to know type 2, 3, etc. numbers, we can throw that information away once it has been used. The way to go is to use two sets to keep track of $D[n]$ and $D[n+1]$.
+
+* Tags :dynamicprogramming:
