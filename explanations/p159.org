@@ -1,0 +1,6 @@
+* Introduction
+
+- Digital root sum
+* Finding all factorizations of a number
+https://en.wikipedia.org/wiki/Multiplicative_partition
+Finding all possible factorizations of a number is called the *multiplcative partition*, which can be calculated using

@@ -1,0 +1,25 @@
+* Introduction
+We iterate over all perfect squares and check if it progressive. This way we only need to check about $10^{6}$ numbers and the only step that remains is finding an algorithm to check for progressiveness.
+
+* Progressive numbers
+The first observation is that $d$, $q$ and $r$ cannot be zero, because otherwise the numbers won't form a geometric sequence (unless they are all zero, but that is not possible). Note that clearly $ 1\leq d \leq n$, and if $q$ is zero then $d > n$, which is also excluded. But what are the implications of $r$ not being equal to zero? Excluding zero remainders means that we do can directly exclude all positive divisors of $n$.
+
+
+* Check up to sqrt(n)
+
+* Geometric sequence
+#+BEGIN_SRC python
+def is_geom_seq(nums):
+    """Checks if the numbers belong to a geometric sequence."""
+    nums = sorted(nums)
+    ratio = set()
+    for idx, num in enumerate(nums[::-1]):
+        next_num = nums[idx+1]
+        r = next_num/num
+        if idx == 0:
+            ratio.add(r)
+        else:
+            if r not in ratio:
+                return False
+    return True
+#+END_SRC

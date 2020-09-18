@@ -2,7 +2,7 @@ from math import ceil, sqrt
 from collections import Counter
 import random
 
-def is_prime_MR(n):
+def isprime(n):
     """
     Miller-Rabin primality test.
 
@@ -126,8 +126,22 @@ def properdivisors(n):
     return(propdiv)
 
 
-def prime_factors(n):
+def primefactors(n):
     """Returns a list of prime factors of n."""
+    factors = []
+    primes = prime_sieve(n)
+
+    for p in primes:
+        while n % p == 0:
+            factors.append(p)
+            n /= p
+        if n == 1:
+            return(factors)
+    return([n])
+
+
+def primefactors_with_multiplicity(n):
+    """Returns a dictionary of prime factors of n."""
     factors = []
     primes = prime_sieve(n)
 

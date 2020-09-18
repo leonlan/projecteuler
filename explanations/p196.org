@@ -1,0 +1,9 @@
+* Introduction
+A simple brute-force algorithm should work here, but will certainly take more than 1 minute to compute. The algorithm would simply be iterating over all numbers of the corresponding row and its neighbors, and checking whether a number is prime or not. The last step is to check for the corresponding rows if its primes are part of some prime triangle.
+
+
+* Characterizing the triangle
+For some row $i$, there are in total $i$ numbers in that row. We need to find a formula to characterize all the numbers in a row. Triangular numbers come in handy here, which are given by formula $T(n)=n(n+1)/2$. Because we start indexing at 1, we translate the the formula by $+1$ to $T'(n)=n(n+1)/2 +1$. Then, the sequence of numbers in row $i$ is given by $T'(n), T'(n)+1, ..., $T'(n)+i-1$.
+
+
+* Brute forcing

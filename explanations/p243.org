@@ -1,0 +1,2 @@
+* Introduction
+A quick observation is that the resilience of a number $n$ is equal to $\frac{\phi(n)}{n}$, where $\phi(n)$ is the totient number of $n$. The totient number is the number of positive integers $x<n$ such that $gcd(x, n)=1$, which also implies that the fraction $\frac{x}{n}$ cannot be reduced any further.

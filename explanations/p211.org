@@ -1,0 +1,13 @@
+* Introduction
+The question statement is surprisingly simple: for $0<n<64,000,000$, check if the sum of the squares of its divisors is a perfect square. Clearly, brute-forcing this problem is super easy, but finding the positive divisors takes at least $O(sqrt(n))$ time for each number $n$, so this will take much longer than 1 minute. Let's try to find some interesting properties to cut down the search space.
+
+
+* Primes are excluded
+One (small) optimization to cut down the search space is to note that if $n$ is a prime, then the sum of the squares of its divisors are guaranteed to be a non-perfect square. In fact, it will always be $n^{2}+1$. This observation might not be very useful in practice, because checking for primality *could* be more expensive than just computing the positive divisors of a number.
+
+
+* Which sums of subsets of squared numbers is a perfect square?
+1, 2, 3, 4, 5
+We only need to track divisors up to sqrt(n), because then d, n/d are both divisors
+there are only a relatively few combinations that make up perfect squares
+1, 4, 25

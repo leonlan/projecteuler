@@ -1,0 +1,10 @@
+* Introduction
+This problem does not involve much mathematical theory, but rather is more of a programming exercise. First, we need to compute $M(10, d)$ for each $d=0$ to $9$. Then we compute all numbers that have indeed $M(10, d)$ digits and are prime. Next, we sum them all.
+
+
+* Calculating $M(10, d)$ and $N(10, d)$
+We want to find a 10-digit prime with maximum digits of $d$. We compute all possible numbers with 10 digits and exactly $k=10$ to $k=1$ d-digits. How many possibilities are there in total? For $k=10$, it is obvious that there is only 1 possible option. For $k=9$, there are 10 possible positions that a non d-digit can be placed, so it will be $10*9$ = 90$ possibilities. For $k=9$, there are $10$ choose $2$ combinations (= 45), each having $81$ possible configurations, so we have  $45*81 = 3645$ possibilities. For $k=8$, there are $10$ choose $3$ combinations (=120), each having $9*9*9$ possible configurations, etc.
+
+Thus, the general formula for $k$ d-digits is: $\binom(n, x) \times 9^{k}$.
+
+In fact, iterating according this scheme, we directly compute all $N(10, d)$ numbers and only need to check if they are prime or not.
