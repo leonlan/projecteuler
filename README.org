@@ -1,4 +1,18 @@
-# Project Euler
-This repository contains all my solutions for Project Euler sorted by programming language.
+* Project Euler
+[[https://projecteuler.net/profile/leonlan.png][Profile button]]
+Project Euler is a website dedicated to a series of challenging mathematics and computer science problems intended to be solved with programming. Starting since November 2018, I have solved over 150 problems in total, covering topics such as number theory, combinatorics and dynamic programming. It's an incredible fun way to learn about algorithms, discrete mathematics and number theory (and much more!).
 
-Feel free to add me on Project Euler! My friend key is: 942079_iEDMDDXDe13LYMmzlReee7a2IXghArkI
+This repository contains all my solutions for Project Euler sorted by programming language. Feel free to add me on Project Euler. My friend key is: ~942079_iEDMDDXDe13LYMmzlReee7a2IXghArkI~.
+
+I write most of my solutions in Python. In some cases, I have written code in different languages in order to learn a new language. I am currently still rewriting my Python files to have consistent formatting across all solutions.
+
+
+* Log
+- <2021-08-08 Sun> 150 problems solved
+- <2019-03-27 Wed> 100 problems solved
+- <2018-12-03 Mon> 50 problems solved
+- <2018-11-08 Thu> First problem solved
+
+
+* Resources
+There are many great resources that have helped me to solve Project Euler problems.
