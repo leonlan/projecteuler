@@ -1,0 +1,4 @@
+* Explanation
+Let $R[n]$, $G[n]$ and $B[n]$ be the number of ways that a row of size $n$ can be placed with red, green or blue tiles respectively. For each color, the recurrence relation is fairly simple. Let's demonstrate it for blue tiles.
+
+Blue tiles are size 4. So the way that any row of size smaller than 4 can be filled with blue tiles is 0. For any row of size n larger than 4, we denote it with $B[n]$. Then we get the following recurrence relation: $$B[n] = 1 + B[n-1] + B[n-4].$$ In other words, the number of ways that we can fill a row of size $n$ with blue tiles is equal to 1 plus the number of ways we can fill a row of size $n+1$. Additionally, we need to take into account $B[n-4]$.
