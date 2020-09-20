@@ -1,7 +1,5 @@
 * Project Euler
-<a href="https://projecteuler.net/profile/leonlan.png">
-   <img src="https://projecteuler.net/profile/leonlan.png">
-</a>
+<a href="https://projecteuler.net/profile/leonlan.png"><img src="https://projecteuler.net/profile/leonlan.png"></a>
 Project Euler is a website dedicated to a series of challenging mathematics and computer science problems intended to be solved with programming. Starting since November 2018, I have solved over 150 problems in total, covering topics such as number theory, combinatorics and dynamic programming. It's an incredible fun way to learn about algorithms, discrete mathematics and number theory (and much more!).
 
 This repository contains all my solutions for Project Euler sorted by programming language. Feel free to add me on Project Euler. My friend key is: ~942079_iEDMDDXDe13LYMmzlReee7a2IXghArkI~.
