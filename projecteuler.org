@@ -18,5 +18,57 @@ This type of problem is best solved using a cache.b
 ** Techniques
 *** Sieving
 *** Dynamic programming
+*** Discrete-time Markov Chains
+Discrete-time Markov Chains can be easily solved using dynamic programming. The difficult part is to define a state representation whose transition probabilities can be defined relatively efficiently.
 
+**** DONE Problem 151: Paper sheets of standard sizes: an expected-value problem
+***** State representation
+X(t) = State in binary representation at time t
+P(X(0) = [1, 0, 0, 0, 0]) = 1
+P(X(1) = [0, 1, 1, 1, 1]) = 1
+P(X(2) = [0, 0, 2, 2, 2]) = 1/4
+P(X(2) = [0, 1, 0, 2, 2]) = 1/4
+P(X(2) = [0, 1, 1, 0, 1]) = 1/4
+P(X(2) = [0, 1, 1, 1, 0]) = 1/4
+
+P(X(t+1) = x | X(t) = y) = q
+
+And so on.
+
+***** State transitions
+P(X(t+1) = x | X(t) = y) = q
+
+Given a state, what are the next possible states? What are the probabilities? The next states can be computed by taking an sheet and cutting it in half until we have obtained an A5 sheet. The probability is equal to the total number of the chosen sheet divided the total number of sheets.
+
+***** Example
+Try an example of papers with sizes A3, A4 and A5.
+
+***** Solution
+Use the state representation. Calculate P(X(t) = x) for all possible x and t = 1, 2, ..., 16.
+
+At t = 8, 12 and 14 we can expect to find a state with only 1 sheet (respectively a single A2, A3 or A4).
+
+**** TODO Problem 213: Flea Circus
+**** DONE Problem 227: The Chase
+
+***** State representation
+X(t) = The difference between player $i$ and $j$ at time $t$
+***** Transition probabilities
+Players i and j can perform 4 different move combinations:
+- Both players stand still, so the difference remains the same
+- Both players move into the same direction, so the difference remains the same
+- Both players move into opposite directions, so the difference will be +- 2
+- One player will move while the other will remain still, so the difference will be +- 1
+
+For x = 2, ..., n-2:
+
+P(X(t+1) = x) = P(X(t) = x-2) * 1/36 + P(X(t) = x-1) * 8/16 + P(X(t) = x) * 18/16 + P(X(t) = x+1) * 8/16 + P(X(t) = x+2) * 1/36
+
+However, for x = 0, 1, n-1, n, we have to take into account the fact that we are working on a 'circle'. That is, from state 49 and moving into the same opposite will yield 49 + 2 = 51; but a difference of 51 is never possible in a game of 100 players. Instead, the difference will "rotate" around 50, so it will become 49 -> 50 -> 49.
+***** Example
+Try an example with 4 players and thus N = 2.
+
+**** TODO Problem 323: Bitwise-OR operations on random integers
+**** TODO Problem 329: Prime Frog
+**** TODO Problem 493: Under The Rainbow
 ** Type of problems
