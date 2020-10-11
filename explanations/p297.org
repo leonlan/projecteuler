@@ -1,0 +1,42 @@
+* Explanation
+Define $S(n)$ as the sum of all $z(n)$ from 1 up to n (excluding). As always, let's write out the first values for n, the Zeckendorf representation and z(n) and S(n):
++-----+-----+-----+-----+
+|n    |repr |z(n) |S(n) |
++-----+-----+-----+-----+
+|1    |1    |1    |1    |
++-----+-----+-----+-----+
+|2    |2    |1    |2    |
++-----+-----+-----+-----+
+|3    |3    |1    |3    |
++-----+-----+-----+-----+
+|4    |3+1  |2    |5    |
++-----+-----+-----+-----+
+|5    |5    |1    |6    |
++-----+-----+-----+-----+
+|6    |5+1  |2    |8    |
++-----+-----+-----+-----+
+|7    |5+2  |2    |10   |
++-----+-----+-----+-----+
+|8    |8    |1    |11   |
++-----+-----+-----+-----+
+|9    |8+1  |2    |13   |
++-----+-----+-----+-----+
+|10   |8+2  |2    |15   |
++-----+-----+-----+-----+
+|11   |8+3  |2    |17   |
++-----+-----+-----+-----+
+|12   |8+3+1|3    |20   |
++-----+-----+-----+-----+
+|13   |13   |1    |21   |
++-----+-----+-----+-----+
+
+If you look at the Zeckendorf representation, then a clear pattern occurs. Try to figure out how you can calculate S(n) based on z(n); and note that this recurrence relation is different for Fibonacci numbers.
+
+For Fibonacci numbers, we obtain:
+$$S(F_{i}) = (S(F_{i-1}) - S(F_{i-2})) - (F_{i} - F_{i-1} - 1)$$
+
+For non-Fibonacci numbers, the recurrence relation is:
+$$S(n) = S(maximal_f) + S(r) + n - maximal_f,$$
+where $maximal_f$ is the largest Fibonacci number that is smaller than $n$ and $r = n - maximal_f$.
+
+The first equation can be precomputed using dynamic programming. The latter equation can be solved using recursion - but it will be efficient because the number of subcases is very small. This is due to the fact that each recursive step reduces by the maximal Fibonacci number, which makes the remainder very small and thus quick to reach 0.
