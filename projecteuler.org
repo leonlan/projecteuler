@@ -50,7 +50,6 @@ At t = 8, 12 and 14 we can expect to find a state with only 1 sheet (respectivel
 
 **** TODO Problem 213: Flea Circus
 **** DONE Problem 227: The Chase
-
 ***** State representation
 X(t) = The difference between player $i$ and $j$ at time $t$
 ***** Transition probabilities
@@ -68,7 +67,32 @@ However, for x = 0, 1, n-1, n, we have to take into account the fact that we are
 ***** Example
 Try an example with 4 players and thus N = 2.
 
+**** TODO Problem 280: Ant and seeds
+***** State representation
+For each state, we need to consider the following:
+- The current position (i, j)
+- The state of the lower row e.g. (1, 1, 1, 1, 1) if all seeds are still there
+- The state of the upper row e.g. (0, 0, 0, 0, 0) if none of the seeds have been moved
+- Whether or not the ant is currently carrying a seed or not
+
+This state can be modeled as a 5-tuple (i, j, lower, upper, carrying). The number of possibilities of states is 5*5*32*32*2 = 51200; which can be easily computed.
+
+***** Transition probabilities
+The number of transitions for each state is limited; it is namely bounded by the moving option for each ant. An ant can only move up, down, left or right, and only if those moves are legible. So for each state, there are at most 4 different states to transition to. Calculating those transitions and its probabilities is easy (see Problem 213).
+
+The more tricky part is how to take the lower, upper and carrying variables. We shall see that it only requires two conditions:
+1. If the ant is currently carrying a seed, then it will only drop its seed if it moves to a new tile in the upper row that does not contain a seed.
+2. If the ant is currently not carrying a seed, then it will only pick up a seed if it moves to a new tile in the lower row that does contain a seed.
+
+If none of the conditions hold, then lower, upper and carrying all do not change.
+
+***** Example
+I won't include an example here because the instance size is fairly small.
+
+
+
 **** TODO Problem 323: Bitwise-OR operations on random integers
+
 **** TODO Problem 329: Prime Frog
 **** TODO Problem 493: Under The Rainbow
 ** Type of problems
