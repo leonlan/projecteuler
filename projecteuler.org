@@ -67,7 +67,7 @@ However, for x = 0, 1, n-1, n, we have to take into account the fact that we are
 ***** Example
 Try an example with 4 players and thus N = 2.
 
-**** TODO Problem 280: Ant and seeds
+**** DONE Problem 280: Ant and seeds
 ***** State representation
 For each state, we need to consider the following:
 - The current position (i, j)
@@ -90,6 +90,8 @@ If none of the conditions hold, then lower, upper and carrying all do not change
 I won't include an example here because the instance size is fairly small.
 
 
+
+**** [#A] Problem 285: Pythagorean odds
 
 **** TODO Problem 323: Bitwise-OR operations on random integers
 
