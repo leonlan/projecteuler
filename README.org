@@ -8,7 +8,7 @@ I write most of my solutions in Python. In some cases, I have written code in di
 
 
 * Log
-- <2021-08-08 Sun> 150 problems solved
+- <2020-08-08 Sun> 150 problems solved
 - <2019-03-27 Wed> 100 problems solved
 - <2018-12-03 Mon> 50 problems solved
 - <2018-11-08 Thu> First problem solved
