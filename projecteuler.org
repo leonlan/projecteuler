@@ -15,6 +15,58 @@ This type of problem is solved using a cache, which keeps track of intermediate 
 *** Problem 92: Square digit chains
 This type of problem is best solved using a cache.b
 
+*** [[https://projecteuler.net/problem=287][Problem 287: Quad-tree encoding (a simple compression algorithm)]] :recursion:
+Let's first get a better understanding of the problem instance by visualizing the matrix for small $N$:
+#+BEGIN_SRC python :results output
+import numpy as np
+from itertools import product
+
+
+N = 3
+A = np.zeros((2**N, 2**N))
+
+def is_black(coord, N):
+    x, y = coord
+    return (x-2**(N-1))**2 + (y-2**(N-1))**2 <= 2**(2*N-2)
+
+def is_white(coord, N):
+    x, y = coord
+    return not is_black(x, y, N)
+
+for i, j in product(range(2**N), repeat=2):
+    if is_black((i, j), N):
+        A[2**N-j-1][i] = 1
+
+print(A)
+#+END_SRC
+
+#+RESULTS:
+: [[0. 0. 1. 1. 1. 1. 1. 0.]
+:  [0. 1. 1. 1. 1. 1. 1. 1.]
+:  [0. 1. 1. 1. 1. 1. 1. 1.]
+:  [1. 1. 1. 1. 1. 1. 1. 1.]
+:  [0. 1. 1. 1. 1. 1. 1. 1.]
+:  [0. 1. 1. 1. 1. 1. 1. 1.]
+:  [0. 0. 1. 1. 1. 1. 1. 0.]
+:  [0. 0. 0. 0. 1. 0. 0. 0.]]
+
+This kind of looks like a circle (of ones) in the middle. This makes our life much easier, because checking if a 'split' square is of 1 color can be done in checking the corners of the square (why?). Recursion is then feasible, because we can shortcut many subproblems and don't need to consider all $2^N$ possible subproblems.
+
+My solution implements the following functions:
+- =is_black(coord, N)= :: Checks if a given coordinate is black or not.
+- new_coords(coord, position, N) :: Computes new coordinates for each subproblem.
+- same_color(coords, N) :: Checks if the corners coordinates of a square all have the same color. Could be either white or black.
+- encode(coords, N, K) :: Recursive computation of the length of the minimal encoding.
+
+Without any optimizations, my algorithm took about 15 minutes to finish. I did some fiddling and managed to find the following optimizations to get it down to 4 minutes:
+1. I sped-up =same_color= by 50% by summing the coordinate-colors (0 white, 1 black) and checking if it is either 0 (all white) or 4 (all black).
+2. In =is_black=, I computed =2**(2N-2)= in every function call, but this is really expensive considering that this would be done for all coordinates. Instead, pre-computing this value decreased the speed by 33%.
+3. In fact, using =math.pow= is much more efficient than =**= for some reason. This also increased my algorithm by about 50%.
+4. In the discussion board people also talked about a symmetry (top left is rotational symmetric to right bottom) which could also speed up the code by 25%. I did not implement this.
+
+As mentioned on the discussion board, it should be possible to get a pure python code to run in under 1 minute but it will require more optimizations. More specifically, computing =is_black= could be optimized much further (for example, a pre-computed table for (x, y) values for which the coordinates are guaranteed to be black).
+
+
 ** Techniques
 *** Sieving
 *** Dynamic programming
