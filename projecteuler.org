@@ -1,3 +1,5 @@
+#+PROPERTY: header-args :tangle yes :exports both
+
 * Project Euler
 
 ** Solved problems
@@ -10,7 +12,6 @@ Use a totient sieve to solve this problem.
 
 *** Problem 74: Digit factorial chains
 This type of problem is solved using a cache, which keeps track of intermediate results. Without a cache, brute-forcing would be ridiculously expensive.
-
 
 *** Problem 92: Square digit chains
 This type of problem is best solved using a cache.b
@@ -54,9 +55,9 @@ This kind of looks like a circle (of ones) in the middle. This makes our life mu
 
 My solution implements the following functions:
 - =is_black(coord, N)= :: Checks if a given coordinate is black or not.
-- new_coords(coord, position, N) :: Computes new coordinates for each subproblem.
-- same_color(coords, N) :: Checks if the corners coordinates of a square all have the same color. Could be either white or black.
-- encode(coords, N, K) :: Recursive computation of the length of the minimal encoding.
+- =new_coords(coord, position, N)= :: Computes new coordinates for each subproblem.
+- =same_color(coords, N)= :: Checks if the corners coordinates of a square all have the same color. Could be either white or black.
+- =encode(coords, N, K)= :: Recursive computation of the length of the minimal encoding.
 
 Without any optimizations, my algorithm took about 15 minutes to finish. I did some fiddling and managed to find the following optimizations to get it down to 4 minutes:
 1. I sped-up =same_color= by 50% by summing the coordinate-colors (0 white, 1 black) and checking if it is either 0 (all white) or 4 (all black).
@@ -66,6 +67,67 @@ Without any optimizations, my algorithm took about 15 minutes to finish. I did s
 
 As mentioned on the discussion board, it should be possible to get a pure python code to run in under 1 minute but it will require more optimizations. More specifically, computing =is_black= could be optimized much further (for example, a pre-computed table for (x, y) values for which the coordinates are guaranteed to be black).
 
+*** [[https://projecteuler.net/problem=265][Problem 265: Binary circles]] :recursion:
+Problem understanding
+- Start with [0]*N.
+- What are the possible binary circle representations?
+- Each subsequence in 2*N must appear exactly once.
+
+If I extend my current substring, then I can only append 0 or 1. That means that the total possible number of substrings I can make is O(2^(2^N)). Luckily, we don't need to compute them all. Here is a code that I wrote really quick:
+
+#+BEGIN_SRC python :results output
+def is_substring(s, substring):
+    return substring in s
+
+def check(s, N):
+    S = set()
+    s = s + s[:N-1]
+    return len(set([s[i:i+N] for i in range(2**N)])) == 2**N
+
+L = []
+
+def extend(seq, tail, N):
+    if len(seq) == 2**N:
+        if check(seq, N):
+            L.append(seq)
+    else:
+        for i in range(2):
+            candidate = tail[1:] + f'{i}'
+            if not is_substring(seq, candidate):
+                extend(seq + f'{i}', candidate, N)
+
+extend('000', '000', 3)
+print(L)
+#+end_src
+
+#+RESULTS:
+: ['00010111', '00011101']
+
+Surprisingly, it turns out that this also works fine for $N=5$. It even terminates within 1 second. The =check= procedure might be a bit expensive, but there aren't many 32-bit candidates that we need to check, so it is not a big issue.
+
+** Work in progress
+
+*** [[https://projecteuler.net/problem=300][Problem 300: Protein folding]]
+Problem:
+- Suppose you have a random H-P string of size 2**N
+- What is the expected number of H-H contact points?
+
+Thoughts
+- 0 H => 0 points
+- 1 H => 0 points
+- 2 H => 1 point or 0 point
+  For example, HPH can never have a point connected.
+  But HHP can always get a point connected
+
+Steps:
+- Suppose
+- Find the optimal string(s)
+- Compute all possibilities of H/P element placements
+- Calculate the H-H contact points, sum them up
+
+**** TODO How many optimal foldings exist?
+
+**** TODO
 
 ** Techniques
 *** Sieving
