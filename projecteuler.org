@@ -16,6 +16,112 @@ This type of problem is solved using a cache, which keeps track of intermediate 
 *** Problem 92: Square digit chains
 This type of problem is best solved using a cache.b
 
+*** [[https://projecteuler.net/problem=183][Problem 183: Maximum product of parts]] :optimization:
+This question has bothered me for quite a long time. When I looked at this problem for the first time, I thought it would be a simple convex optimization problem which I could solve using =cvxpy= or some other convex solver. However, not realizing that I could rewrite the optimization problem, I became stuck and never managed to do this.
+
+Then I realized that $(N/k)^k$ is an *unconstrained optimization problem* and might actually be differentiable, although it was not so obvious how to. I looked up on how to differentiate any function in the form of $x^x$ and landed upon the topic of [[http://mathcentral.uregina.ca/QQ/database/QQ.09.03/cher1.html][implicit differentiation]]. Using the techniques outlined there, I computed that $k^* = \frac{N}{e}$ is the maximizer. However, we cannot use non-integer valued solutions, so we need to round $k$. Using the code below I empirically tested that rounding to the nearest integer is always best.
+
+#+BEGIN_SRC python :results output :session p183
+from math import exp
+
+def P(r, k):
+    return r**k
+
+def optimize(N):
+    """Finds k such that P(N, k) is maximized."""
+    best_k, best_P = 0, 0
+    for k in range(2, N):
+        r = N/k
+#        print(k, r, P(r, k))
+        if P(r, k) >= best_P:
+            best_P = P(r, k)
+            best_k = k
+    return best_k, round(N*exp(-1)), best_P
+
+def brute_force(d=15):
+    """Iterate over the first 15 problems."""
+    print("Best k (bruteforce), best k (using N/e), best P (bruteforce)")
+    for i in range(5, d):
+        print(optimize(i))
+
+brute_force()
+#+END_SRC
+
+#+RESULTS:
+#+begin_example
+Best k (bruteforce), best k (using N/e), best P (bruteforce)
+(2, 2, 6.25)
+(2, 2, 9.0)
+(3, 3, 12.703703703703706)
+(3, 3, 18.96296296296296)
+(3, 3, 27.0)
+(4, 4, 39.0625)
+(4, 4, 57.19140625)
+(4, 4, 81.0)
+(5, 5, 118.81376000000002)
+(5, 5, 172.10367999999994)
+#+end_example
+
+So that makes finding the optimal $k$ an easy job. However, how do we decide that $M(N)$ is a terminating decimal or not? Googling brought me to the following [[https://magoosh.com/gmat/math/basics/gmat-math-terminating-and-repeating-decimals/#:~:text=expression%20will%20terminate.-,If%20the%20prime%20factorization%20of%20the%20denominator%20of%20a%20fraction,then%20the%20decimal%20expression%20repeats.][theorem]]:
+
+#+BEGIN_SRC
+If the prime factorization of the denominator of a fraction has only factors of 2 and factors of 5, the decimal expression terminates.  If there is any prime factor in the denominator other than 2 or 5, then the decimal expression repeats.
+#+END_SRC
+
+That's pretty easy to check! Also, we just need to check this fact for $N/k^*$, since putting a power on it just changes the multiplicity of existing prime factors. Below I wrote an example for the =is_terminating= function.
+
+#+BEGIN_SRC python :results output :session p183
+from sympy import factorint
+from collections import defaultdict
+
+def is_terminating(n, d):
+    """Checks if the fraction n/d is terminating or not."""
+    fn = defaultdict(int, factorint(n))
+    fd = defaultdict(int, factorint(d))
+
+    # Cancel terms which occur both in fn and fd
+    for k, v in fn.items():
+        c = min(fn[k], fd[k])
+        fn[k] -= c
+        fd[k] -= c
+
+    # Check if denominator only contains 2s and 5s
+    for k, v in fd.items():
+        if k not in [2, 5]:
+            if v > 0:
+                return False
+    return True
+
+# Example from the problem statement
+print(is_terminating(14641, 256))
+#+END_SRC
+
+#+RESULTS:
+: True
+*** [[https://projecteuler.net/problem=197][Problem 197: Investigating the behaviour of a recursively defined sequence]] :bruteforce:
+Not sure what to think of this problem. I wrote the code below and did some googling, and it turns out that this sequence converges really fast, so we can just take N = 10000 and get the answer.. But I'm kind of disappointed that it's easy to compute without having to think about the math.
+
+#+BEGIN_SRC python :results output
+from math import floor, pow
+import numpy as np
+
+def f(x):
+    return floor(pow(2, 30.403243784 - pow(x, 2))) * pow(10, -9)
+
+K = 10000
+u = np.zeros(K)
+u[0] = -1
+for i in range(1, K):
+    u[i] = f(u[i-1])
+print(u[i-1],u[i])
+
+#+END_SRC
+
+#+RESULTS:
+: 1.029461839 0.681175878
+
+From the discussion board, I read that the math is actually pretty neat.
+
 *** [[https://projecteuler.net/problem=287][Problem 287: Quad-tree encoding (a simple compression algorithm)]] :recursion:
 Let's first get a better understanding of the problem instance by visualizing the matrix for small $N$:
 #+BEGIN_SRC python :results output
@@ -104,7 +210,6 @@ print(L)
 : ['00010111', '00011101']
 
 Surprisingly, it turns out that this also works fine for $N=5$. It even terminates within 1 second. The =check= procedure might be a bit expensive, but there aren't many 32-bit candidates that we need to check, so it is not a big issue.
-
 ** Work in progress
 
 *** [[https://projecteuler.net/problem=300][Problem 300: Protein folding]]
@@ -128,6 +233,305 @@ Steps:
 **** TODO How many optimal foldings exist?
 
 **** TODO
+
+*** [[https://projecteuler.net/problem=166][Problem 165: Intersections]]
+Sketch:
+- Given (x1, y1) and (x2, y2), compute f(x) = ax + bx
+- True intersection point if any endpoint is not a solution to f(x)
+
+*** [[https://projecteuler.net/problem=166][Problem 166: Criss Cross]]
+From left to right, top to bottom, define the variables $x_{i}$ for $i=1, \dots, 16$ as the value at position $i$. We can then setup a system of linear equations:
+\begin{align*}
+x_{1}+x_{2}+x_{3}+x_{4} = d \\
+x_{5}+x_{6}+x_{7}+x_{8} = d \\
+x_{9}+x_{10}+x_{11}+x_{12} = d \\
+x_{13}+x_{14}+x_{15}+x_{16} = d \\
+x_{1}+x_{5}+x_{9}+x_{13}=d \\
+x_{2}+x_{6}+x_{10}+x_{14}=d \\
+x_{3}+x_{7}+x_{11}+x_{15}=d \\
+x_{4}+x_{8}+x_{12}+x_{16}=d \\
+x_{1}+x_{6}+x_{11}+x_{16}=d \\
+x_{4}+x_{7}+x_{10}+x_{13}=d \\
+\end{align*}
+
+Ten equations with 16 variables; 6 of those variables will be free. Simplifying all those equations will yield:
+
+....
+
+*** [[https://projecteuler.net/problem=285][Problem 285: Pythagorean odds]]
+#+BEGIN_SRC python :results output
+from random import random
+from math import sqrt
+
+def draw(k):
+    a = random()
+    b = random()
+    if round(sqrt((k*a+1)**2 + (k*b+1)**2)) == k:
+        return k
+    else:
+        return 0
+
+def play(K):
+    score = 0
+    for k in range(1, K+1):
+        score += draw(k)
+    return score
+
+def simulation(k, iterations=100000):
+    total = 0
+    for i in range(iterations):
+        total += play(k)
+    return total/iterations
+
+print(simulation(10))
+
+#+END_SRC
+
+#+RESULTS:
+: 10.21561
+
+*** [[https://projecteuler.net/problem=333][Problem 333: Special partitions]] :bruteforce:
+My most important observations are:
+- There are not so many numbers below $N$ that can be expressed *only* as $2^i*3^j$. So we might want to pre-compute all these numbers. We call such numbers *partition numbers*.
+- Given two partition numbers $x$ and $y$, when do they divide each other? By the unique prime factorization theorem, we know $x | y$ if both exponents of $x$ are less or equal element-wise than the exponents of $y$. To give an example: $1=2^0x3^0$ divides $16=2^4x3^0$ because $0 \leq 4$ and $0 \leq 0$. We call $x$ and $y$ *neighbors* if $x$ divides $y$ or $y$ divides $x$.
+
+With this, we can simply create a tree for each $p$ to brute-force all possible legible sets of partition numbers.
+
+<2020-11-11 Wed> The case for n = 100 is solved, but it takes way too long to solve n = 10^6. In my current estimates, it would take about 17 hours. Not sure why it would take so long..
+- How can we skip some prime numbers?
+
+
+#+BEGIN_SRC python :results output
+from collections import defaultdict
+from sympy import sieve
+threshold = 1000000
+
+# This should give me all legitimate partitioning numbers
+L = []
+for i in range(30):
+    for j in range(20):
+        x = 2**i*3**j
+        if x <= threshold:
+            L.append([x, i, j])
+
+L = sorted(L[1:])
+
+# Which numbers can be put together?
+# Def: neighbors
+neighbors = defaultdict(list)
+for (n, i, j) in L:
+    for (m, x, y) in L:
+        if i <= x and j <= y or x <= i and y <= j:
+            pass
+        else:
+            neighbors[n].append(m)
+
+# For certain p, recursively check if I can make it.
+def intersection(L1, L2):
+    return [x for x in L1 if x in L2]
+
+
+def P(q):
+    total = 0
+    def partition(p, last, candidates):
+        if p == 0:
+            nonlocal total
+            total += 1
+        elif candidates:
+            for n in candidates:
+                if last >= n and p >= n:
+                    new_candidates = intersection(candidates, neighbors[n])
+                    partition(p-n, n, new_candidates)
+        else:
+            pass
+    for (x, i, j) in L:
+        if x <= q:
+            partition(q-x, x, neighbors[x])
+    return total
+print(sum([q for q in sieve.primerange(2, 100) if P(q) == 1]))
+
+
+#+END_SRC
+
+#+RESULTS:
+: 233
+
+***
+
+*** [[https://projecteuler.net/problem=336][Problem 336: Maximix Arrangements]]
+Given configurations of 11 carriages:
+- Find the maximix arrangements (the worst possible arrangement if we sort ABC... in order)
+- Compute the 2011th lexicographic arrangement
+
+How can we sort the train most efficiently according to Simon's strategy? Given a string $s$ and some letter $l$ that we need to sort, there are only two options for sorting. Either $l$ is at the end of the string, then we immediately know that 1 reverse operation will yield the desired position. If $l$ is not at the end of the string, then we can cut the string in front of $l$, reverse the right substring, and then reverse the entire string. This needs 2 operations.
+
+For example, consider 'beacd'. We would like to sort 'a' to the right position. Since a is not at the last index, we will split the string in two by splitting in front of the letter a: 'be' and 'acd'. Next, we reverse 'acd' to 'dca' and glue the substrings back to get 'bedca'. Finally, we reverse that string to obtain 'acdeb'. We can continue this for the remainder unsorted substring 'cdeb' to calculate the number of moves needed.
+
+See code below for the sorting mechanism.
+#+BEGIN_SRC python :results output :session p333
+from itertools import permutations
+
+N = 6
+
+char2idx = {}
+for c in range(0, N):
+    char2idx[chr(ord('A')+c)] = c
+
+
+idx2char = {}
+for c in range(0, N):
+    idx2char[c] = chr(ord('A')+c)
+
+
+def reverse(s):
+    return s[::-1]
+
+
+def partial_sort(s, t):
+    """Sort the string s.t. letter t will be in front."""
+    if s[-1] == t:
+        return 1, reverse(s)
+    else:
+        i = s.index(t)
+        new_string = reverse(s[:i] + reverse(s[i:]))
+        return 2, new_string
+    return s
+
+
+def sort(s, N):
+    """Returns the number of moves needed to sorts train arrangement
+    according to Simon's efficient ordering strategy."""
+    count = 0
+    for t in range(N):
+        if s:
+            if s[0] == idx2char[t]:
+                s = s[1:]
+            else:
+                num_of_moves, new_s = partial_sort(s, idx2char[t])
+                count += num_of_moves
+                s = new_s[1:]
+        else:
+            break
+
+    return count
+
+def brute_force(K, target):
+    """Brute-force all permutations of K strings and check maximix."""
+    d = {}
+    arrangements = permutations(char2idx.keys())
+    for s in arrangements:
+        d[s] = sort(s, K)
+
+    maximix = sorted([k for k, v in d.items() if v == max(d.values())])
+    # print(max(d.values()))
+    import pprint
+    # print(f'These are all arrangements for N = {N}: ')
+    pprint.pprint(maximix)
+    print(len(maximix))
+    return maximix[target-1]
+
+# print(sort('DFAECB', N))
+print(brute_force(N, 0))
+
+
+#N=4 / 5
+#N=5 / 7
+#N=6 / 9
+#N=7 / 11
+#N=8 / 13
+
+
+#+END_SRC
+
+#+RESULTS:
+#+begin_example
+[('C', 'A', 'D', 'E', 'B', 'F'),
+ ('C', 'A', 'E', 'B', 'F', 'D'),
+ ('C', 'D', 'A', 'E', 'B', 'F'),
+ ('C', 'D', 'F', 'A', 'E', 'B'),
+ ('C', 'D', 'F', 'B', 'A', 'E'),
+ ('C', 'F', 'A', 'D', 'E', 'B'),
+ ('C', 'F', 'B', 'A', 'D', 'E'),
+ ('C', 'F', 'B', 'E', 'A', 'D'),
+ ('D', 'A', 'E', 'C', 'B', 'F'),
+ ('D', 'F', 'A', 'E', 'C', 'B'),
+ ('D', 'F', 'B', 'A', 'E', 'C'),
+ ('D', 'F', 'B', 'C', 'A', 'E'),
+ ('E', 'A', 'D', 'B', 'F', 'C'),
+ ('E', 'C', 'A', 'D', 'B', 'F'),
+ ('E', 'C', 'F', 'A', 'D', 'B'),
+ ('E', 'C', 'F', 'B', 'A', 'D'),
+ ('F', 'A', 'D', 'E', 'C', 'B'),
+ ('F', 'A', 'E', 'C', 'D', 'B'),
+ ('F', 'B', 'A', 'D', 'E', 'C'),
+ ('F', 'B', 'A', 'E', 'C', 'D'),
+ ('F', 'B', 'C', 'A', 'D', 'E'),
+ ('F', 'B', 'C', 'E', 'A', 'D'),
+ ('F', 'B', 'D', 'A', 'E', 'C'),
+ ('F', 'B', 'D', 'C', 'A', 'E')]
+24
+('F', 'B', 'D', 'C', 'A', 'E')
+#+end_example
+
+The only thing that remains is finding out how many configurations we need to consider. In total, there are $11!$ possible permutations of carriages, which is about $O(n^8)$ so we need to exclude some instances. Using the =brute_force= algorithm I computed the maximix value for each $N=4, \dots, 8$ which turns out to be =[5, 7, 9, 11, 13]=, so 2 steps for each increase in $N$. That means that for 11 trains, we will need 19 moves. If we consider the =partial_sort= algorithm, this would mean that in 9 cases we have a 'double' rotation and in 1 case we only need a single rotation. Since =sort= takes about ~60 microseconds, we can make at most ~1 million functions calls to remain in the 60 second solution threshold.
+
+**** TODO How can we construct such bad arrangements? From the results above we can observe the following:
+- 'A' is never followed by 'B' in a bad arrangement. Otherwise, this will give 'B' for free by the rotation step of 'A'.
+- Doesn't start with 'A' or 'B'
+- Never ends with 'A'
+
+- 'F
+- *How can I get good rotations*?
+#+BEGIN_SRC
+N = 4
+[('D', 'A', 'C', 'B'),
+ ('D', 'B', 'A', 'C')]
+
+N = 5
+: [('C', 'A', 'E', 'B', 'D'),
+:  ('C', 'D', 'A', 'E', 'B'),
+:  ('C', 'D', 'B', 'A', 'E'),
+:  ('D', 'A', 'E', 'C', 'B'),
+:  ('D', 'B', 'A', 'E', 'C'),
+:  ('D', 'B', 'C', 'A', 'E')]
+
+N = 6
+[('C', 'A', 'D', 'E', 'B', 'F'),
+ ('C', 'A', 'E', 'B', 'F', 'D'),
+ ('C', 'D', 'A', 'E', 'B', 'F'),
+ ('C', 'D', 'F', 'A', 'E', 'B'),
+ ('C', 'D', 'F', 'B', 'A', 'E'),
+ ('C', 'F', 'A', 'D', 'E', 'B'),
+ ('C', 'F', 'B', 'A', 'D', 'E'),
+ ('C', 'F', 'B', 'E', 'A', 'D'),
+ ('D', 'A', 'E', 'C', 'B', 'F'),
+ ('D', 'F', 'A', 'E', 'C', 'B'),
+ ('D', 'F', 'B', 'A', 'E', 'C'),
+ ('D', 'F', 'B', 'C', 'A', 'E'),
+ ('E', 'A', 'D', 'B', 'F', 'C'),
+ ('E', 'C', 'A', 'D', 'B', 'F'),
+ ('E', 'C', 'F', 'A', 'D', 'B'),
+ ('E', 'C', 'F', 'B', 'A', 'D'),
+ ('F', 'A', 'D', 'E', 'C', 'B'),
+ ('F', 'A', 'E', 'C', 'D', 'B'),
+ ('F', 'B', 'A', 'D', 'E', 'C'),
+ ('F', 'B', 'A', 'E', 'C', 'D'),
+ ('F', 'B', 'C', 'A', 'D', 'E'),
+ ('F', 'B', 'C', 'E', 'A', 'D'),
+ ('F', 'B', 'D', 'A', 'E', 'C'),
+ ('F', 'B', 'D', 'C', 'A', 'E')]
+#+END_SRC
+
+#+BEGIN_SRC python :results output :session p333
+
+
+#+END_SRC
+
+#+RESULTS:
+: 6
+: ('D', 'A', 'E', 'C', 'B')
+
+
 
 ** Techniques
 *** Sieving
@@ -212,3 +616,20 @@ I won't include an example here because the instance size is fairly small.
 **** TODO Problem 329: Prime Frog
 **** TODO Problem 493: Under The Rainbow
 ** Type of problems
+
+#+BEGIN_SRC python :result output
+def h():
+    N = set()
+    def f(x):
+        if x == 0:
+            N.add(1)
+        elif x > 0:
+            f(x-1)
+    f(10)
+    return N
+
+print(h())
+#+END_SRC
+
+#+RESULTS:
+: None
