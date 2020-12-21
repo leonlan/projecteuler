@@ -122,6 +122,100 @@ print(u[i-1],u[i])
 
 From the discussion board, I read that the math is actually pretty neat.
 
+*** [[https://projecteuler.net/problem=259][Problem 259: Reachable Numbers]] :dp:
+This question has been on my mind for a long, long time. It's related to [[https://projecteuler.net/problem=93][Problem 93: Arithmetic expressions]] in the way that we need to construct arithmetic expressions restricted to some set of numbers. I'm also a big fan of the game 24, which is the reason why I'm excited about this problem.
+
+The idea of this question is quite simple: we need to find the sum of all reachable numbers. How can we construct an algorithm that computes all these reachable numbers in a reasonable amount of time? My intuition says: dynamic programming.
+
+1-subsets
+2-subsets
+
+Define =S[n][l][r]= as the set of numbers that can be constructed using $n$ consecutive numbers, starting at index $l$ and ending at index $r$ (inclusive). For ease of computation, we let the indices start at $1$ and end at $9$. If $n$ is larger than $r-l+1$, then the set becomes empty.  Before we explain why this definition will become helpful, some examples are given:
+#+BEGIN_SRC
+S[1][i][i] = {i} for all i = 1, ..., 9
+S[2][1][2] = {1+2, 1-2, 1*2, 1/2}
+S[2][1][4] = {} # Empty set
+S[3][1][3] = {(1+2) + 3, (1-2) + 3, ...,
+              (1+2) - 3, (1-2) - 3, ...,
+              ...
+              ...
+              1 * (2+3), 1 * (2-3), ...,
+              1 / (2+3), 1 / (2-3), ...,
+             }
+#+END_SRC
+
+Our goal is eventually to compute =S[9][1][9]=, i.e. the set of numbers that can be constructed using $n$ numbers, starting at index $1$ and ending at index $9$. Thus, the main question becomes: how can we get there? As the above example illustrates, to compute =S[3][1][3]=  we can compute the set of elements of =S[2][1][2] x S[1][3][3]= and =S[1][1][1] x S[2][2][3]=, where =x= is the placeholder for any operator =+, -, *, /=, which we will call the global operator from now on (I know, using =x= is confusing, but =*= here is multiplication).
+
+Can we be 100% sure that we can compute =S[3][1][3]= using the two operations above? Do we also need to consider numbers that can be constructed as the operation =S[1][1][1] x S[1][2][2] x S[1][3][3]= for instance? There's fortunately no need for that: you can prove that if we use more than 1 global operator =x=, then it is a subset of a larger subset. For example, =S[1][1][1] x S[1][2][2]= is a subset of =S[2][1][2]= by construction. Hence, we can find any set =S[n][l][p]= by consider the global operation between two sets =S[m][i][j] x S[k][x][y]= such that:
+- =m+k = n=
+- =y-i+1 = n=: in words, it must be a consecutive string of digits
+- =x = j-1=: actually redundant, but also makes sure that the consecutive string of digits is considered. We only need 2 out 3 conditions listed here.
+
+This finishes the theoretic part of our algorithm. One more thing: we also need to include concatenated numbers. Hence, each set =S[n][l][p]= should be initialized with the possibly concatenated numbers. See below for the code that computes this.
+
+#+BEGIN_SRC python
+import numpy as np
+N, L, R = 10, 10, 10
+
+S = [[[set() for r in range(R)] for l in range(L)] for n in range(N)]
+
+def concat_num(l, r):
+    """Returns the concated number starting at l and ending at r."""
+    s = ''.join([str(x) for x in range(l, r+1)])
+    return int(s)
+
+for n in range(1, N):
+    for l in range(1, L):
+        for r in range(1, R):
+            if r-l+1 == n:
+                S[n][l][r].add(concat_num(l, r))
+
+#+END_SRC
+
+Let's now finish the algorithm. As mentioned before, we can construct any set =S[n][l][p]= through a global operation between two other sets. It should be easy to see that all the sets with $n=1$ are just the initialized numbers. That means that we can start constructing the sets with $n=2$. We start at index $1$ and keep going until (and including) our start position at $9-n+1=8$. Once we have computed the subsets with size $n=2$, we continue with $n=3$, and then $n=4$, etc. until we reach $n=9$. Et voila, putting all this together in code yields a perfect way to find all the reachable numbers, which is stored in =S[9][1][9]=.
+
+
+Two details that I have not touched upon are:
+- How to create the global operator =x=, but that should not be too hard to figure out; and
+- Filtering the final solution =S[9][1][9]= on positive integers. Also beware of floating point errors. This depends on the programming language that you use. If you use Python, I would recommend using the [[https://pypi.org/project/quicktions/][quicktions]] library for fractional arithmetic support.
+
+*** [[https://projecteuler.net/problem=265][Problem 265: Binary circles]] :recursion:
+Problem understanding
+- Start with [0]*N.
+- What are the possible binary circle representations?
+- Each subsequence in 2*N must appear exactly once.
+
+If I extend my current substring, then I can only append 0 or 1. That means that the total possible number of substrings I can make is O(2^(2^N)). Luckily, we don't need to compute them all. Here is a code that I wrote really quick:
+
+#+BEGIN_SRC python :results output
+def is_substring(s, substring):
+    return substring in s
+
+def check(s, N):
+    S = set()
+    s = s + s[:N-1]
+    return len(set([s[i:i+N] for i in range(2**N)])) == 2**N
+
+L = []
+
+def extend(seq, tail, N):
+    if len(seq) == 2**N:
+        if check(seq, N):
+            L.append(seq)
+    else:
+        for i in range(2):
+            candidate = tail[1:] + f'{i}'
+            if not is_substring(seq, candidate):
+                extend(seq + f'{i}', candidate, N)
+
+extend('000', '000', 3)
+print(L)
+#+end_src
+
+#+RESULTS:
+: ['00010111', '00011101']
+
+Surprisingly, it turns out that this also works fine for $N=5$. It even terminates within 1 second. The =check= procedure might be a bit expensive, but there aren't many 32-bit candidates that we need to check, so it is not a big issue.
 *** [[https://projecteuler.net/problem=287][Problem 287: Quad-tree encoding (a simple compression algorithm)]] :recursion:
 Let's first get a better understanding of the problem instance by visualizing the matrix for small $N$:
 #+BEGIN_SRC python :results output
@@ -173,44 +267,86 @@ Without any optimizations, my algorithm took about 15 minutes to finish. I did s
 
 As mentioned on the discussion board, it should be possible to get a pure python code to run in under 1 minute but it will require more optimizations. More specifically, computing =is_black= could be optimized much further (for example, a pre-computed table for (x, y) values for which the coordinates are guaranteed to be black).
 
-*** [[https://projecteuler.net/problem=265][Problem 265: Binary circles]] :recursion:
-Problem understanding
-- Start with [0]*N.
-- What are the possible binary circle representations?
-- Each subsequence in 2*N must appear exactly once.
+** Work in progress
+*** TODO [[https://projecteuler.net/problem=277][Problem 277: A Modified Collatz sequence]]
+The best way to explain this question is by demonstrating some examples. The key idea is that it is all about periodicity.
 
-If I extend my current substring, then I can only append 0 or 1. That means that the total possible number of substrings I can make is O(2^(2^N)). Luckily, we don't need to compute them all. Here is a code that I wrote really quick:
+For example, let's take the sequence 'DDD'. Which numbers can start with such a subsequence? Knowing that D can only occur if the current number is divisible by three with no remainder, it follows that only numbers that are three-times divisible by 3 with no remainder can start with subsequence 'DDD'.
 
+81 is an example of such number. If we let $a_{1}=81$, then we get $a_{2} = 9$, $a_{3} = 3$ and $a_{4}=1$. As you can see, all numbers $a_{1}, a_{2}$ and $a_{3}$ are divisible by 3.
+
+The previous example was a very easy case, so let's up the difficulty a bit by considering the subsequence 'UDD'. In this case, the step U occurs if our initial number has remainder 1, so contenders for $a_{1}$ are $1, 4, 7, 10, ...$. However, which of these numbers are also contenders for $a_{2}$, knowing that the transformation $U(a_1)$ must give a number that is divisible 3 (since the next step is D)?
+
+Here comes the key observation: For each of the candidate numbers of $a_1$, the transformed numbers $a_2 = U(a_1)$ are periodic. Let's show this:
 #+BEGIN_SRC python :results output
-def is_substring(s, substring):
-    return substring in s
+def U(a):
+    return (4*a+2)//3
 
-def check(s, N):
-    S = set()
-    s = s + s[:N-1]
-    return len(set([s[i:i+N] for i in range(2**N)])) == 2**N
+contenders = [1, 4, 7, 10, 13]
+transformed = [U(a) for a in contenders]
+periodicity = [a % 3 for a in transformed]
 
-L = []
-
-def extend(seq, tail, N):
-    if len(seq) == 2**N:
-        if check(seq, N):
-            L.append(seq)
-    else:
-        for i in range(2):
-            candidate = tail[1:] + f'{i}'
-            if not is_substring(seq, candidate):
-                extend(seq + f'{i}', candidate, N)
-
-extend('000', '000', 3)
-print(L)
-#+end_src
+print(contenders)
+print(transformed)
+print(periodicity)
+#+END_SRC
 
 #+RESULTS:
-: ['00010111', '00011101']
+: [1, 4, 7, 10, 13]
+: [2, 6, 10, 14, 18]
+: [2, 0, 1, 2, 0]
 
-Surprisingly, it turns out that this also works fine for $N=5$. It even terminates within 1 second. The =check= procedure might be a bit expensive, but there aren't many 32-bit candidates that we need to check, so it is not a big issue.
-** Work in progress
+Looking at the periodicity of the transformed contender numbers, we see that the /valid/ contenders for $a_1$ are 4 and 13, because $U(4)$ and $U(13)$ have remainder 0 which is needed for the next step D.
+
+We can now start to think about the first steps our algorithm. Since we are dealing with periodicity, we only need to make sure that our contender numbers (in some iteration) follow the periodicity that is needed for the upcoming steps. It would be quite problematic to keep the entire array =[1, 4, 7, 10, ...]= (up to the lower bound, 10^15 in this case) in memory, but we really don't need to do that. It is sufficient to keep just the smallest number which is a valid contender at each iteration.
+
+Applying this logic it to our current example: consider the first iteration. The first valid contender for the step U is the number 1. We store this in a variable =start= and go on to the next iteration. For the next step D, we check the remainder of $U(1)$ and see that it is 2. That's not good, since we need remainder 0. But what we do know (from the periodicity of the remainders) is that the next contender (4) of the 1st iteration will get remainder 0 if it is transformed by U ($U(4) = 6$). So we can change our =start= variable to 4. Note that 13 would also be a contender for sequence UD, but we do not need to consider that because it is not the smallest valid contender. In fact, we only needed to consider at most 2 contenders to find the first new valid contender. That is, we only needed to consider 1, 4, and 7 to find the first valid contender that satisfies the sequence UD. For example, since $U(10)$ and $U(1)$ have the same remainder, it would be unnecessary to check $U(10)$ again.
+
+The jumps between the start number and valid contenders become larger and larger in each iteration. In the first iteration we need to consider 0, 1, 2, which has intermediate jumps of 1. In the second iteration, we need to consider 1, 4, 7, which has intermediate jumps of 3. In the third iteration, you can show that we need to consider 4, 13 and 22, which have intermediate jumps 9. And if we would go on the next iteration, then we would see that the intermediate jumps become 27. The formula for the jumps is 3^(i-1), where i is the i-th iteration.
+
+There are many more subtleties to be explained, but I'll keep it to this for now.
+#+BEGIN_SRC python
+start = 0
+for each iteration i:
+    compute the period of start
+    compute the needed period for the next step
+    compute the needed jumps j to get the right period
+    start += j * jump
+
+
+keep adding jump to start until we reach a > bound.
+#+END_SRC
+
+
+#+BEGIN_SRC python :results output
+step2period = {'D': 0, 'U': 1, 'd': 2}
+
+Dp = [0, 1, 2]
+Up = [0, 1, 2]
+dp = [2, 1, 0]
+
+start = 0
+for i, step in enumerate(sequence):
+    # Initialization
+    if i == 0:
+        start = step2period[step]
+    else:
+        jump = 3**i
+        # if start is not at the right period,
+        # jump start to another position
+        current = compute_period(start, subseq)
+        target = step2period[step]
+        j = compute_jumps(current, target, step)
+        start += j * jump
+
+jump = 3**(i+1)
+while start < lb:
+    start += jump
+
+print(start)
+
+#+END_SRC
+
 
 *** [[https://projecteuler.net/problem=300][Problem 300: Protein folding]]
 Problem:
@@ -258,6 +394,141 @@ Ten equations with 16 variables; 6 of those variables will be free. Simplifying 
 
 ....
 
+*** [[https://projecteuler.net/problem=190][Problem 190: Maximising a weighted product]]
+Problem description
+- For fixed m, maximize product(xi^i) s.t. sum(xi) = m.
+
+I think this might be a geometric program.. The objective function is a monomial whereas the constraint is a polynomial.
+
+#+BEGIN_SRC python :results output
+from cvxopt import matrix, exp, log, solvers
+from math import prod
+
+m = 10
+
+F = []
+for i in range(1, m+1):
+    L = [-i] + [0.]*m
+    L[i] = 1
+    F.append(L)
+F = matrix(F)
+
+g = log(matrix([1] + [1/m]*m))
+K = [1, m]
+x = exp(solvers.gp(K, F, g)['x'])
+print(x)
+print(int(prod([n**(i+1) for i, n in enumerate(x)])))
+
+
+def solve(m):
+    """Solve the geometric program for size m."""
+    F = []
+    for i in range(1, m+1):
+        L = [-i] + [0.]*m
+        L[i] = 1
+        F.append(L)
+        F = matrix(F)
+        g = log(matrix([1] + [1/m]*m))
+        K = [1, m]
+        x = exp(solvers.gp(K, F, g)['x'])
+    return int(prod([n**(i+1) for i, n in enumerate(x)]))
+
+#+END_SRC
+
+#+RESULTS:
+#+begin_example
+     pcost       dcost       gap    pres   dres
+ 0:  0.0000e+00  4.4409e-16  2e+00  1e+00  1e+00
+ 1: -6.8339e+01 -6.6165e+01  1e+00  1e+00  1e+00
+ 2: -6.4075e+01 -5.3137e+01  9e-01  1e+00  8e-01
+ 3: -5.0731e+01  9.4167e+02  2e+00  1e+01  3e+00
+ 4: -5.2885e+09  7.1675e+09  2e-02  2e+08  3e+00
+ 5: -6.6921e+01 -5.4998e+01  9e-01  1e+00  8e-01
+ 6: -4.5237e+01 -1.5257e+01  9e-01  7e-01  6e-01
+ 7: -3.7263e+01 -1.1361e+01  2e-01  4e-01  3e-01
+ 8: -1.2080e+01 -8.2361e+00  2e-02  5e-02  4e-02
+ 9: -8.4987e+00 -8.3175e+00  4e-04  2e-03  5e-03
+10: -8.3274e+00 -8.3217e+00  4e-06  7e-05  3e-04
+11: -8.3218e+00 -8.3217e+00  4e-08  9e-07  3e-06
+12: -8.3217e+00 -8.3217e+00  4e-10  9e-09  3e-08
+Optimal solution found.
+[ 1.82e-01]
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+[ 3.64e-01]
+[ 5.45e-01]
+[ 7.27e-01]
+[ 9.09e-01]
+[ 1.09e+00]
+[ 1.27e+00]
+[ 1.45e+00]
+[ 1.64e+00]
+[ 1.82e+00]
+
+4112
+#+end_example
+
+There is a problem for the geometric program when using $N=7$ and $N=9$. For the first one I get a numerical overflow error and for the second one the program doesn't terminate. In all other cases is works perfectly.
+
+I tried to resolve this by creating $A$ and $b$ matrices, but I didn't get it to work properly due to rank errors. It works for $m=2$ surprisingly, but not for larger values. See below.
+#+BEGIN_SRC python :results output :session p190
+from cvxopt import matrix, exp, log, solvers
+from math import prod
+
+m = 4
+F = []
+for i in range(1, m+1):
+    L = [-1.0]
+    F.append(L)
+
+# F.append(L)
+print(F)
+F = matrix(F)
+g = log(matrix([1]))
+K = [1]
+A = []
+for i in range(m):
+    L = [1/m]*m
+    A.append(L)
+A = matrix(A)
+b = matrix([[float(m)]*m])
+print(A ,b)
+x = exp(solvers.gp(K, F, g, A=A, b=b)['x'])
+#+END_SRC
+
+#+RESULTS:
+#+begin_example
+[[-1.0], [-1.0], [-1.0], [-1.0]]
+[ 2.50e-01  2.50e-01  2.50e-01  2.50e-01]
+[ 2.50e-01  2.50e-01  2.50e-01  2.50e-01]
+[ 2.50e-01  2.50e-01  2.50e-01  2.50e-01]
+[ 2.50e-01  2.50e-01  2.50e-01  2.50e-01]
+ [ 4.00e+00]
+[ 4.00e+00]
+[ 4.00e+00]
+[ 4.00e+00]
+
+     pcost       dcost       gap    pres   dres
+ 0:  0.0000e+00  0.0000e+00  1e+00  1e+00  1e+00
+#+end_example
+
+
 *** [[https://projecteuler.net/problem=285][Problem 285: Pythagorean odds]]
 #+BEGIN_SRC python :results output
 from random import random
@@ -289,6 +560,48 @@ print(simulation(10))
 
 #+RESULTS:
 : 10.21561
+
+*** [[https://projecteuler.net/problem=302][Problem 302: Strong Achilles Numbers]]
+A positive integer $n$ is *powerful* if $p^2$ is a divisor of $n$ for every prime factor $p$ in $n$.
+- We only need to consider the numbers with prime factorizations such that each prime has at least multiple 2
+
+A positive integer $n$ is a *perfect power* if $n$ can be expressed of another positive integer.
+- We do not need to consider the numbers whose prime factorizations include purely even multiples. For example, $324=2^2*3^4=2^2*(3^2)^2=18^2$. If the multiples are all even, then we can always make a single square.
+
+A positive integer $n$ is an *Achilles number* if $n$ is powerful but not a perfect power.
+
+A positive integer $n$ is a *Strong Achilles number* if both $S$ and $\phi(S)$ are Achilles numbers, where $\phi(S)$ is the totient function of $S$.
+- The totient function can be calculated using the prime factorization
+
+How can we efficiently go through all prime factorizations from 2**2 all the way up to 2**3 * (10**18)**(1/2)?
+- Can we determine a strategy that efficiently 'predicts' when $\phi(n)$ is not an Achilles number?
+
+#+BEGIN_SRC python :results output
+from sympy import factorint
+from math import prod
+from collections import Counter
+
+print(factorint(1800))
+#[2:3, 3:2, 5:2]
+#[2:2, 3:1, 5:1] + factors[(5-1)*(3-1)=8]
+
+def fc(n):
+    """Returns factorint counter."""
+    return Counter(factorint(n))
+
+def totient_factors(factors):
+    """Calculates the totient factors given factors."""
+    new_factors = Counter({k: v-1 for k, v in factors.items()})
+    extra_factors = Counter(factorint(prod([k-1 for k in factors.keys()])))
+    return new_factors + extra_factors
+
+print(totient_factors(Counter(factorint(1800))))
+#+END_SRC
+
+#+RESULTS:
+: {2: 3, 3: 2, 5: 2}
+: Counter({2: 5, 3: 1, 5: 1})
+
 
 *** [[https://projecteuler.net/problem=333][Problem 333: Special partitions]] :bruteforce:
 My most important observations are:
@@ -530,7 +843,6 @@ N = 6
 #+RESULTS:
 : 6
 : ('D', 'A', 'E', 'C', 'B')
-
 
 
 ** Techniques
