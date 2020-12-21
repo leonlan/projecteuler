@@ -34,8 +34,7 @@ def global_operation(S1, S2):
 
 
 def p259():
-    """
-    """
+    """Calculates all reachable numbers using arithmetic operations on 1-9."""
     N, L, R = 10, 10, 10
 
     # Initialization
