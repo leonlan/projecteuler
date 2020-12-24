@@ -122,6 +122,17 @@ print(u[i-1],u[i])
 
 From the discussion board, I read that the math is actually pretty neat.
 
+*** [[https://projecteuler.net/problem=240][Problem 240: Top Die]] :recursion:
+Sometimes, it's hard to explain a problem. In such cases, I often believe that I do not fully grasp the theory yet, which is also the case here. I won't be able to write a complete solution (unlike Problem 259 for instance) but I'll write down the initial problems and my solutions.
+
+**** Initial struggles
+- How do we deal with permutations of dice? For instance, 66333 is a permutation of 33366. But both have the property that the k-sum (e.g. sum of largest k numbers) is 15.
+- A brute-force approach would be to compute the product of all dice, which comes down to 12^20 possible options. This number is too large, so how can we reduce the search space?
+
+**** Solutions
+- We only need to compute all non-increasing sequences of k numbers for which the sum is 15 (=: S).
+- We can write a recursive approach to generate all such numbers.
+- We use a character to integer mapping to represent 2-digit numbers as 1 character, e.g. ='a' = 12= and ='l' = 1=.
 *** [[https://projecteuler.net/problem=259][Problem 259: Reachable Numbers]] :dp:
 This question has been on my mind for a long, long time. It's related to [[https://projecteuler.net/problem=93][Problem 93: Arithmetic expressions]] in the way that we need to construct arithmetic expressions restricted to some set of numbers. I'm also a big fan of the game 24, which is the reason why I'm excited about this problem.
 
@@ -267,7 +278,52 @@ Without any optimizations, my algorithm took about 15 minutes to finish. I did s
 
 As mentioned on the discussion board, it should be possible to get a pure python code to run in under 1 minute but it will require more optimizations. More specifically, computing =is_black= could be optimized much further (for example, a pre-computed table for (x, y) values for which the coordinates are guaranteed to be black).
 
+*** [[https://projecteuler.net/problem=389][Problem 389: Platonic Dice]]        :probability:dp:generating_functions:
+We want to calculate the variance of a random variable $X$, which is given by $$Var(X) = \sum_{i=1}^n P(X=x_i)(x_i-\mu)^2,$$ where $x_i$ are the possible outcomes of $X$ for all $i=1, \dots, n$.
+
+If you've taken a course in probability before, then you might have heard of the law of total probability. This theorem states that if $B$ is a finite partition of a sample space, then for each event $A$ in the same probability space we can compute $$P(A) = \sum_n P(A \mid B_n)P(B_n).$$ This can be exploited to compute the probability distributions for any of the random variables $T$, $C$, $O$, etc. and subsequently we can compute the variance of $I$.
+
+To illustrate this, let's calculate the probability distribution of $T$. Since $T$ is a unbiased, single 4-sided die, then we know that $$P(T=1) =  P(T=2) = P(T=3) = P(T=4) = 0.25.$$ This was quite easy, so how about the next one? Here we need to apply the law of total probability since we are taking a sum that depends on a random variable. For instance, consider $C = \sum_{t=1}^T U(6)$ where $U(6) \sim Unif(1, 6)$, i.e., the sum of $T$ i.i.d. 6-sided dice. By the law of total probability, it follows that we can calculate this as $$P(C=x) = \sum_{t} P\Big(\sum_{i=1}^t U(6) = x\Big) P(T=t).$$ Here, $T$ has 4 possible events (which were considered above), so the only thing that remains is that we need to $P\Big(\sum_{i=1}^t U(6) = x\Big)$ for each $t$, which are the possible values of $T$. This is the most challenging part of the question.
+
+My solution is through dynamic programming. It runs really slow (20 min) it does compute the right answer. The solution thread shows that we could have computed the problem using generating functions:
+$$T(x) = \frac14 \sum_{k=1}^4 x^k$$
+$$C(x) = T\left(\frac16 \sum_{k=1}^6 x^k\right)$$
+$$\ldots$$
+$$I(x) = D\left(\frac1{20} \sum_{k=1}^{20} x^k\right)$$
+$$V = I''(1) + I'(1) - I'(1)^2$$
+which is really cool. I don't know enough about it, but I'll be sure to refer to this once I need it again.
+
+*** [[https://projecteuler.net/problem=739][Problem 739: Summation of Summations]] :catalan_numbers:
+This is the first time that I tried to solve a problem from the recent section, since I always perceived these problems as too difficult for me to solve. Then somehow I got my housemate Dorian hooked about Project Euler and asked me to show him the newest problem at the time, which happened to be Problem 739. Not expecting the tiniest little bit, I showed Dorian the problem description on my iPad and I continued to solve Problem 389, which I was solving myself that evening.
+
+What happened next surprised me quite a bit. Dorian worked out the pattern for up to $n=8$ and found on Google that this corresponded to the *Catalan numbers*. In particular, calculating $f(n)$ could be calculated by finding the coefficients corresponding to $n$-th row of the *Catalan triangle*. Given that we are calculating an order $m=2$ Catalan triangle, the $n$-th row and $k$-th element can be calculated as follows:
+\[C_{m}(n,k)={\begin{cases}\left({\begin{array}{c}n+k\\k\end{array}}\right)&\,\,\,0\leq k<m\\\\\left({\begin{array}{c}n+k\\k\end{array}}\right)-\left({\begin{array}{c}n+k\\k-m\end{array}}\right)&\,\,\,m\leq k\leq n+m-1\\\\0&\,\,\,k>n+m-1\end{cases}}\]
+
+Knowing that we had to compute $n=10^8$ with $k \leq n$, we needed to find an efficient way to compute $C_2(n, k)$ in constant time, since an $O(n)$ algorithm is needed to compute this problem in reasonable amount of time. Since Dorian already made some huge success in figuring out the pattern for calculating this solution, I couldn't just let the problem hanging here. So I googled how to calculate large binominal coefficients modulo a prime number $p$, and stumbled upon this very well-written guide on exactly this topic: [[https://fishi.devtail.io/weblog/2015/06/25/computing-large-binomial-coefficients-modulo-prime-non-prime/][Computing large binomial coefficients modulo prime]]. The key idea is to use Fermat's Little Theorem to compute each binomial coefficient by finding the multiplicative inverse of the denominator.
+
+Using these observations, the algorithm is actually very simple. Define $C(n, k) = C^+(n, k) - C^-(n,k)$ for $k \geq 2$. Then we can compute the next element through the following recurrence relation: $$C^+(n, k+1) = C^+(n, k) \frac{n+k}{k}, \quad C^-(n,k +1)\frac{n+k}{k-2}$$ and hence $$C(n, k+1) = C^+(n,k+1)-C^-(n,k+1).$$ Essentially, this is what my algorithm does with some additional modulo computations (and modulo inverse for the denominator).
+
+Although my algorithm doesn't run so fast (about 15 minutes), it does compute the right answer! I'm happy about the result since I did not expect to solve it anyhow in the first place. Thanks to Dorian for his perseverance.
+
+
+
 ** Work in progress
+*** TODO [[https://projecteuler.net/problem=209][Problem 209: Circular Logic]]
+**** Definitions
+What are 6-input binary truth tables?
+
+#+BEGIN_SRC python :results output
+abcdef = 2**6
+print(f"There are {abcdef} distinct 6-bit inputs.")
+print(f"There are {2**abcdef} possible 6-input binary truth tables t.")
+#+END_SRC
+
+#+RESULTS:
+: There are 64 distinct 6-bit inputs.
+: There are 18446744073709551616 possible 6-input binary truth tables t.
+
+Consider the given formula: =τ(a, b, c, d, e, f) AND τ(b, c, d, e, f, a XOR (b AND c)) = 0=. We define =t1= and the first part, and =t2= as the second part. Then, instead of evaluating this expression, we consider the possible such that =t1 AND t2 = 1=, since this case is much easier to consider: we need to find all =t= such that for every =abcdef= both =t1= and =t2= are true. But here is what I get stuck at: there exists only one function =tau= such that =t1= is always true regardless of the input. That would simply be the function =tau= that always returns true.
+
 *** TODO [[https://projecteuler.net/problem=277][Problem 277: A Modified Collatz sequence]]
 The best way to explain this question is by demonstrating some examples. The key idea is that it is all about periodicity.
 
@@ -345,6 +401,22 @@ while start < lb:
 
 print(start)
 
+#+END_SRC
+
+*** TODO [[https://projecteuler.net/problem=375][Problem 375: Minimum of subsequences]]
+#+BEGIN_SRC python
+import numpy as np
+
+N = 2*10**8
+S = np.zeros(N)
+S[0] = 0
+for i in range(1, N):
+    S[i] = S[i-1] ** 2 % 50515093
+
+
+def p375_bf(N):
+    """Bruteforce algorithm for p375."""
+    ...
 #+END_SRC
 
 
