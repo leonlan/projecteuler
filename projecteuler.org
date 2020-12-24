@@ -293,6 +293,21 @@ $$I(x) = D\left(\frac1{20} \sum_{k=1}^{20} x^k\right)$$
 $$V = I''(1) + I'(1) - I'(1)^2$$
 which is really cool. I don't know enough about it, but I'll be sure to refer to this once I need it again.
 
+*** [[https://projecteuler.net/problem=650][Problem 650: Divisors of Binomial Product]] :binom:
+**** Definitions
+For the sake of readability, let's repeat the definitions from the problem here. Let $$B(n) = \displaystyle \prod_{k=0}^n {n \choose k}$$ be the product of binominal coefficients, let $$D(n) = \displaystyle \sum_{d|B(n)} d$$ be the sum of divisors of $B(n)$, and let $$S(n) = \displaystyle \sum_{k=1}^n D(k)$$ be the sum of all $D(k)$ up to $n$. The goal is to compute $S(20000)$, which suggests that we are allowed to find a $O(n^2)$ algorithm.
+
+**** $D(n)$: Sum of divisors <=> prime factorization
+Computing the sum of divisors is a common idea in Project Euler. Luckily, we do not need to compute all possible divisors of a number $n$ to find its sum of divisors. Instead it suffices to compute the prime factorization, more info can be found on [[https://en.wikipedia.org/wiki/Divisor_function][Wikipedia]]. Given the prime factorization of $n$, then you take each different prime factor and add together all its powers up to the one that appears in the prime factorization, and then multiply all these sums together to obtain the sum of divisors! We denote $\sigma(n)$ as the sum of divisors. This means that if we can find the prime factorization of $B(n)$, then we can easily compute $D(n)$.
+
+**** $B(n)$: Compact expression
+Finding a compact expression will be essential to compute the prime factorization. To illustrate this, let's consider an example for $B(5)$. Writing out the product in both choose and factorial form gives $$\binom{5}{0} \cdot \binom{5}{1} \cdot \binom{5}{2} \cdot \binom {5}{3} \cdot \binom {5}{4} \cdot \binom {5}{5},$$ $$ = \frac{1}{1} \cdot \frac{5}{1} \cdot \frac{5\cdot 4}{1 \cdot 2} \cdot \frac{5\cdot 4}{1 \cdot 2} \cdot \frac{5}{1} \frac{1}{1}.$$ Observe that the binomial coefficient is symmetric around $n/2$, so we essentially only need to look at the first 3 terms and then square it to yield the full expression. Doing this for the current example, we obtain $$\Big(\frac{5^2 \cdot 4^1}{1^2 \cdot 2^1}\Big)^2.$$ Clearly, there is some pattern in here, and if you try for yourself then you can see the following expression emerge (if $n$ is odd): $$\Big(\frac{n^{k}\cdot (n-1)^{(k-1)} \cdot \dots \cdot (n-k+1)^1}{1^k \cdot 2^{k-1} \cdot \dots \cdot k^1}\Big)^2 = \frac{n^{2k}\cdot (n-1)^{2(k-1)} \cdot \dots \cdot (n-k+1)^2}{1^{2k} \cdot 2^{2(k-1)} \cdot \dots \cdot k^2},$$ where $k = \lfloor \frac{n}{2} \rfloor$. There is an exception if $n$ is even, because then we should exclude the 'middle' element in the square to prevent overcounting. The expression then becomes (check this using an example, e.g. $B(10)$):
+$$\Big(\frac{n^{k-1}\cdot (n-1)^{k-2} \cdot \dots \cdot (n-k+2)^1}{1^{k-1} \cdot 2^{k-2} \cdot \dots \cdot (k-2)^1}\Big)^2 \cdot \frac{n \cdot (n-1) \cdot \dots \cdot (n-k+1)}{1 \cdot 2 \cdot \dots \cdot k} = \frac{n^{2k-1}\cdot (n-1)^{2(k-1)-1} \cdot \dots \cdot (n-k+1)^1}{1^{2k-1} \cdot 2^{2(k-1)-1} \cdot \dots \cdot k^1},$$
+where $k = \frac{n}{2}$ again.
+
+**** The algorithm
+Now that we have a compact expression for $B(n)$, we can compute $D(n)$ quite easily. For each $n$, we construct a prime-factors array for $B(n)$. Using a pre-computed prime factorization table, we can translate each of the factors in the numerator and denominator of $B(n)$ to a prime factor, e.g. $4^2$ becomes $2^4$, and count the powers. Once we have considered all terms we have obtained the full prime factorization of $B(n)$ and we can use the discussed method for computing $D(n)$. This procedure will take about $O(n)$, and since we need to consider $n$ numbers, the final algorithm will have complexity $O(n^2)$ as desired. My code runs in about 3 minutes, which is a bit slow. The solutions thread shows that there are much more compact ways to write $B(n)$, which will definitely speed up the algorithm.
+
 *** [[https://projecteuler.net/problem=739][Problem 739: Summation of Summations]] :catalan_numbers:
 This is the first time that I tried to solve a problem from the recent section, since I always perceived these problems as too difficult for me to solve. Then somehow I got my housemate Dorian hooked about Project Euler and asked me to show him the newest problem at the time, which happened to be Problem 739. Not expecting the tiniest little bit, I showed Dorian the problem description on my iPad and I continued to solve Problem 389, which I was solving myself that evening.
 
@@ -304,7 +319,6 @@ Knowing that we had to compute $n=10^8$ with $k \leq n$, we needed to find an ef
 Using these observations, the algorithm is actually very simple. Define $C(n, k) = C^+(n, k) - C^-(n,k)$ for $k \geq 2$. Then we can compute the next element through the following recurrence relation: $$C^+(n, k+1) = C^+(n, k) \frac{n+k}{k}, \quad C^-(n,k +1)\frac{n+k}{k-2}$$ and hence $$C(n, k+1) = C^+(n,k+1)-C^-(n,k+1).$$ Essentially, this is what my algorithm does with some additional modulo computations (and modulo inverse for the denominator).
 
 Although my algorithm doesn't run so fast (about 15 minutes), it does compute the right answer! I'm happy about the result since I did not expect to solve it anyhow in the first place. Thanks to Dorian for his perseverance.
-
 
 
 ** Work in progress
