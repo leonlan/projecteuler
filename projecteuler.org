@@ -1,9 +1,7 @@
 #+PROPERTY: header-args :tangle yes :exports both
 
 * Project Euler
-
 ** Solved problems
-
 *** Problem 69: Totient maximum
 Can be solved analytically. Otherwise, use a totient sieve.
 
@@ -322,6 +320,202 @@ Although my algorithm doesn't run so fast (about 15 minutes), it does compute th
 
 
 ** Work in progress
+*** Definitions
+- #A :: Beginning of solution
+- #B :: Solution known
+- #C :: Solution known and implemented, but contains some unidentified errors
+*** [[https://projecteuler.net/problem=159][Problem 159: Digital root sums of factorisations]] :greedy:
+This solution will be described in a more exploratory fashion, since I don't directly see the clear mathematical concepts needed to solve the problem. I'll go over the definitions, program some base cases and hopefully understand the problem in the process of exploring.
+
+**** Definitions
+Let's start with restating the definitions used in this problem. Given a number $n$, the *digital root* of $n$ denoted by $DR(n)$ is found by adding together the digits of that number and repeating that process until a number is arrived at that is less than $10$. For example, $DR(8)=8, DR(11)=2$ and $DR(467) = 8$.
+
+The *digital root sum* of $n$ (denoted by $DRS(n)$) given some factorization of $n$ is the sum of the digital roots of the individual factors of a number. For example, given $n=24$, then the factorization $2\cdot 2 \cdot 2 \cdot 3$ yields $DRS(24) = DR(2)+ DR(2) + DR(2) + DR(3) = 9$. The *maximum digital room sum* of n (denoted by $mdrs(n))$ is the maximum $DRS(n)$ of all possible factorizations of $n$.
+
+The goal of this question is to compute $mdrs(n)$ for $n = 2, \dots, 999999$.
+
+**** Examples
+To get a better of the problem at hand, let's go over some (bruteforced) examples. We first compute the digital roots of all numbers below 1 million, define the function =factors= to compute all factorizations of a number $n$ and then define functions =DRS= to compute the digital root sum given a factorization. It's quite a messy code, but in the end we will be using the function =compute_all_DRS= to compute the list of factorizations and correspond DRS for a number $n$.
+
+#+BEGIN_SRC python :results output :session p159
+from sympy import factorint
+from itertools import combinations
+from collections import defaultdict
+import itertools
+from tqdm import tqdm
+
+
+def compute_all_dr(N):
+    """Compute the digital roots of all numbers below N."""
+    def add_digits(n):
+        """Adds the digits of a number n."""
+        return sum([int(d) for d in str(n)])
+
+    DR = dict()
+    for i in range(N):
+        x = i
+        while int(x) > 9:
+            x = add_digits(x)
+            if x in DR:
+                x = DR[x]
+                break
+        DR[i] = x
+
+    return DR
+
+
+def factors(n):
+    """Compute all factorizations of a number n. Code from:
+   https://stackoverflow.com/questions/21612287/algorithm-to-find-all-factorizations-of-an-integer
+    """
+    def mult(fs):
+        res = 1
+        for f in fs:
+            res *= f
+        return res
+
+    def _generate_all_factorizations(factors):
+        if len(factors) <= 1:
+            yield factors
+            return
+
+        for factors_in_mult in range(1, len(factors)+1):
+            for which_is in itertools.combinations(range(len(factors)), factors_in_mult):
+                this_mult = mult(factors[i] for i in which_is)
+                rest = [factors[i] for i in range(len(factors)) if i not in which_is]
+
+                for remaining in _generate_all_factorizations(rest):
+                    yield [this_mult] + remaining
+
+    def generate_all_factorizations(factors):
+        seen = set()
+        res = []
+        for f in _generate_all_factorizations(factors):
+            f = tuple(sorted(f))
+            if f in seen:
+                continue
+            seen.add(f)
+            yield f
+
+    flatten = lambda t: [item for sublist in t for item in sublist]
+    prime_factors = flatten([[k] * v for k, v in factorint(n).items()])
+    return generate_all_factorizations(prime_factors)
+
+
+DR = compute_all_dr(10**6)
+
+
+def DRS(factors):
+    """Computes the DRS given factorization."""
+    return sum([DR[x] for x in factors])
+
+
+def MDRS(n):
+    """Compute the maximum DRS of n."""
+    factorizations = factors(n)
+    return max([DRS(f) for f in factorizations])
+
+
+def compute_all_DRS(n):
+    """Computes all DRS of a number including factorization sorted."""
+    factorizations = factors(n)
+    return sorted([(DRS(f), f) for f in factorizations], reverse=True)
+
+
+def find_pairs(factors):
+    """Given a dictionary of factors, find all possible pairs of factors
+    that can be multiplied."""
+    singles = list(combinations([f for f, v in factors.items() if v >= 1], 2))
+    doubles = [(f, f) for f, v in factors.items() if v >= 2]
+    return singles + doubles
+
+
+def DRS_dict(factors):
+    """Computes the DRS given a dictionary factorization."""
+    return sum([DR[n] * power for n, power in factors.items()])
+
+
+def compute_mdrs(n):
+    L = []
+    def improve(factors):
+        """Recursively multiply two factors as long as it does not decrease
+        the digital root sum of the factors."""
+        factors = defaultdict(int, factors)
+        improvement = 0
+        for a, b in find_pairs(factors):
+            c = a*b
+            if DR[c] >= DR[a] + DR[b]:
+                new_factors = factors.copy()
+                new_factors[a] -= 1
+                new_factors[b] -= 1
+                new_factors[c] += 1
+                improvement += 1
+                improve(new_factors)
+        if not improvement:
+            L.append(factors)
+    improve(factorint(n))
+    return max([DRS_dict(f) for f in L])
+
+
+total = 0
+for n in tqdm(range(2, 10**6)):
+    total += compute_mdrs(n)
+#+END_SRC
+
+#+RESULTS:
+
+Before we try some programming examples, let's first do some theoretical analysis. Given the prime factorization of a number, what should we do to maximize the digital root sum? Consider the prime factors $2$, $3$, $5$ and $7$ with any power/multiplicity. Observe that:
+- It's good to make $8$ from $2^3$, since $DR(8) = 8$ and $3DR(2) = 6$.
+- Similarly, it's always good to make $9$ from $3^2$, since $DR(9) = 9$ and $2DR(3) = 6$.
+- How about $5$? Here it's better to leave any multiple of $5$ as is, because $DR(25) = 7$ and $2DR(5) = 10$.
+- What about $7$? Again, it's better to leave any multiple of $7$ as is, because $DR(49) = 4$ and $2DR(7) = 14$.
+
+This means that whenever we have any multiple of $2^3$ or $3^2$, then changing those to $8$ and $9$ respectively always yields a better digital root sum. For $5$ and $7$, it's better to leave them as is. But what if we have the factorization $2, 5^2, 13$ for instance?
+- Should we leave this factorization as is, then we get $DRS = 2 + 5 + 5 + 4 = 16.$
+- If we factorize $2 \cdot 13 = 26$, then we obtain $DRS = 5 + 5 + 8 = 18.$
+- All other options will not yield better results.
+
+Hmm, interesting. It actually makes sense what is happening here. It's good to multiply two factors into a new factor /if/ the new factor yields a higher digital root. In this example, $DR(2*13) > DR(2) + DR(13)$. But it wouldn't be good to multiply $2$ and $17$ since $DR(2*17) = DR(34) = 7$ while $DR(2) + DR(17) = 10$.
+
+Consider another case where we have the prime factors $2^3$ and $13^3$. It can be computed that $26*26*26$ is the best factorization which yields $24$ as the maximum digital room sum.
+
+The above examples suggest that we need to design an algorithm that always computes the best local improvements of two items multiplied together. Let's verify that with some examples:
+
+#+BEGIN_SRC python :results output :session p159
+from pprint import pprint
+
+pprint(compute_all_DRS(24))
+#+END_SRC
+
+#+RESULTS:
+: [(11, (3, 8)),
+:  (10, (4, 6)),
+:  (10, (2, 2, 6)),
+:  (9, (2, 3, 4)),
+:  (9, (2, 2, 2, 3)),
+:  (6, (24,)),
+:  (5, (2, 12))]
+
+#+BEGIN_SRC python :results output :session p159
+from pprint import pprint
+
+pprint(compute_all_DRS(424))
+#+END_SRC
+
+#+RESULTS:
+: [(16, (8, 53)),
+:  (14, (2, 4, 53)),
+:  (14, (2, 2, 2, 53)),
+:  (11, (4, 106)),
+:  (11, (2, 2, 106)),
+:  (7, (2, 212)),
+:  (1, (424,))]
+
+Trying more example show that we can always get from the prime factorization to the factorization that attains the maximum digital root sum using only local improvements.
+
+
+
+
 *** TODO [[https://projecteuler.net/problem=209][Problem 209: Circular Logic]]
 **** Definitions
 What are 6-input binary truth tables?
@@ -433,8 +627,7 @@ def p375_bf(N):
     ...
 #+END_SRC
 
-
-*** [[https://projecteuler.net/problem=300][Problem 300: Protein folding]]
+*** TODO [[https://projecteuler.net/problem=300][Problem 300: Protein folding]]
 Problem:
 - Suppose you have a random H-P string of size 2**N
 - What is the expected number of H-H contact points?
@@ -456,12 +649,12 @@ Steps:
 
 **** TODO
 
-*** [[https://projecteuler.net/problem=166][Problem 165: Intersections]]
+*** TODO [[https://projecteuler.net/problem=166][Problem 165: Intersections]]
 Sketch:
 - Given (x1, y1) and (x2, y2), compute f(x) = ax + bx
 - True intersection point if any endpoint is not a solution to f(x)
 
-*** [[https://projecteuler.net/problem=166][Problem 166: Criss Cross]]
+*** TODO [#B] [[https://projecteuler.net/problem=166][Problem 166: Criss Cross]]
 From left to right, top to bottom, define the variables $x_{i}$ for $i=1, \dots, 16$ as the value at position $i$. We can then setup a system of linear equations:
 \begin{align*}
 x_{1}+x_{2}+x_{3}+x_{4} = d \\
@@ -480,7 +673,7 @@ Ten equations with 16 variables; 6 of those variables will be free. Simplifying 
 
 ....
 
-*** [[https://projecteuler.net/problem=190][Problem 190: Maximising a weighted product]]
+*** TODO [#C] [[https://projecteuler.net/problem=190][Problem 190: Maximising a weighted product]]
 Problem description
 - For fixed m, maximize product(xi^i) s.t. sum(xi) = m.
 
@@ -539,24 +732,6 @@ def solve(m):
 12: -8.3217e+00 -8.3217e+00  4e-10  9e-09  3e-08
 Optimal solution found.
 [ 1.82e-01]
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 [ 3.64e-01]
 [ 5.45e-01]
 [ 7.27e-01]
@@ -570,14 +745,14 @@ Optimal solution found.
 4112
 #+end_example
 
-There is a problem for the geometric program when using $N=7$ and $N=9$. For the first one I get a numerical overflow error and for the second one the program doesn't terminate. In all other cases is works perfectly.
+It gives the correct result when using $N=10$, but there is a problem for the geometric program when using $N=7$ and $N=9$. For the first one I get a numerical overflow error and for the second one the program doesn't terminate. In all other cases is works perfectly.
 
 I tried to resolve this by creating $A$ and $b$ matrices, but I didn't get it to work properly due to rank errors. It works for $m=2$ surprisingly, but not for larger values. See below.
 #+BEGIN_SRC python :results output :session p190
 from cvxopt import matrix, exp, log, solvers
 from math import prod
 
-m = 4
+m = 9
 F = []
 for i in range(1, m+1):
     L = [-1.0]
@@ -600,22 +775,31 @@ x = exp(solvers.gp(K, F, g, A=A, b=b)['x'])
 
 #+RESULTS:
 #+begin_example
-[[-1.0], [-1.0], [-1.0], [-1.0]]
-[ 2.50e-01  2.50e-01  2.50e-01  2.50e-01]
-[ 2.50e-01  2.50e-01  2.50e-01  2.50e-01]
-[ 2.50e-01  2.50e-01  2.50e-01  2.50e-01]
-[ 2.50e-01  2.50e-01  2.50e-01  2.50e-01]
- [ 4.00e+00]
-[ 4.00e+00]
-[ 4.00e+00]
-[ 4.00e+00]
+[[-1.0], [-1.0], [-1.0], [-1.0], [-1.0], [-1.0], [-1.0], [-1.0], [-1.0]]
+[ 1.11e-01  1.11e-01  1.11e-01  1.11e-01  1.11e-01  1.11e-01  1.11e-01 ... ]
+[ 1.11e-01  1.11e-01  1.11e-01  1.11e-01  1.11e-01  1.11e-01  1.11e-01 ... ]
+[ 1.11e-01  1.11e-01  1.11e-01  1.11e-01  1.11e-01  1.11e-01  1.11e-01 ... ]
+[ 1.11e-01  1.11e-01  1.11e-01  1.11e-01  1.11e-01  1.11e-01  1.11e-01 ... ]
+[ 1.11e-01  1.11e-01  1.11e-01  1.11e-01  1.11e-01  1.11e-01  1.11e-01 ... ]
+[ 1.11e-01  1.11e-01  1.11e-01  1.11e-01  1.11e-01  1.11e-01  1.11e-01 ... ]
+[ 1.11e-01  1.11e-01  1.11e-01  1.11e-01  1.11e-01  1.11e-01  1.11e-01 ... ]
+[ 1.11e-01  1.11e-01  1.11e-01  1.11e-01  1.11e-01  1.11e-01  1.11e-01 ... ]
+[ 1.11e-01  1.11e-01  1.11e-01  1.11e-01  1.11e-01  1.11e-01  1.11e-01 ... ]
+ [ 9.00e+00]
+[ 9.00e+00]
+[ 9.00e+00]
+[ 9.00e+00]
+[ 9.00e+00]
+[ 9.00e+00]
+[ 9.00e+00]
+[ 9.00e+00]
+[ 9.00e+00]
 
      pcost       dcost       gap    pres   dres
  0:  0.0000e+00  0.0000e+00  1e+00  1e+00  1e+00
 #+end_example
 
-
-*** [[https://projecteuler.net/problem=285][Problem 285: Pythagorean odds]]
+*** TODO [[https://projecteuler.net/problem=285][Problem 285: Pythagorean odds]]
 #+BEGIN_SRC python :results output
 from random import random
 from math import sqrt
@@ -647,7 +831,7 @@ print(simulation(10))
 #+RESULTS:
 : 10.21561
 
-*** [[https://projecteuler.net/problem=302][Problem 302: Strong Achilles Numbers]]
+*** TODO [[https://projecteuler.net/problem=302][Problem 302: Strong Achilles Numbers]]
 A positive integer $n$ is *powerful* if $p^2$ is a divisor of $n$ for every prime factor $p$ in $n$.
 - We only need to consider the numbers with prime factorizations such that each prime has at least multiple 2
 
@@ -688,8 +872,7 @@ print(totient_factors(Counter(factorint(1800))))
 : {2: 3, 3: 2, 5: 2}
 : Counter({2: 5, 3: 1, 5: 1})
 
-
-*** [[https://projecteuler.net/problem=333][Problem 333: Special partitions]] :bruteforce:
+*** TODO [[https://projecteuler.net/problem=333][Problem 333: Special partitions]]                       :bruteforce:
 My most important observations are:
 - There are not so many numbers below $N$ that can be expressed *only* as $2^i*3^j$. So we might want to pre-compute all these numbers. We call such numbers *partition numbers*.
 - Given two partition numbers $x$ and $y$, when do they divide each other? By the unique prime factorization theorem, we know $x | y$ if both exponents of $x$ are less or equal element-wise than the exponents of $y$. To give an example: $1=2^0x3^0$ divides $16=2^4x3^0$ because $0 \leq 4$ and $0 \leq 0$. We call $x$ and $y$ *neighbors* if $x$ divides $y$ or $y$ divides $x$.
@@ -757,7 +940,7 @@ print(sum([q for q in sieve.primerange(2, 100) if P(q) == 1]))
 
 ***
 
-*** [[https://projecteuler.net/problem=336][Problem 336: Maximix Arrangements]]
+*** TODO [[https://projecteuler.net/problem=336][Problem 336: Maximix Arrangements]]
 Given configurations of 11 carriages:
 - Find the maximix arrangements (the worst possible arrangement if we sort ABC... in order)
 - Compute the 2011th lexicographic arrangement
@@ -931,9 +1114,8 @@ N = 6
 : ('D', 'A', 'E', 'C', 'B')
 
 
+
 ** Techniques
-*** Sieving
-*** Dynamic programming
 *** Discrete-time Markov Chains
 Discrete-time Markov Chains can be easily solved using dynamic programming. The difficult part is to define a state representation whose transition probabilities can be defined relatively efficiently.
 
@@ -1007,7 +1189,7 @@ I won't include an example here because the instance size is fairly small.
 
 
 
-**** [#A] Problem 285: Pythagorean odds
+**** TODO Problem 285: Pythagorean odds
 
 **** TODO Problem 323: Bitwise-OR operations on random integers
 
