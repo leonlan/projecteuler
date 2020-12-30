@@ -1,4 +1,4 @@
-#+PROPERTY: header-args :tangle yes :exports both
+s#+PROPERTY: header-args :tangle yes :exports both
 
 * Project Euler
 ** Solved problems
@@ -13,6 +13,196 @@ This type of problem is solved using a cache, which keeps track of intermediate 
 
 *** Problem 92: Square digit chains
 This type of problem is best solved using a cache.b
+*** [[https://projecteuler.net/problem=159][Problem 159: Digital root sums of factorisations]] :greedy:localsearch:
+This solution will be described in a more exploratory fashion, since I don't directly see the clear mathematical concepts needed to solve the problem. I'll go over the definitions, program some base cases and hopefully understand the problem in the process of exploring.
+
+**** Definitions
+Let's start with restating the definitions used in this problem. Given a number $n$, the *digital root* of $n$ denoted by $DR(n)$ is found by adding together the digits of that number and repeating that process until a number is arrived at that is less than $10$. For example, $DR(8)=8, DR(11)=2$ and $DR(467) = 8$.
+
+The *digital root sum* of $n$ (denoted by $DRS(n)$) given some factorization of $n$ is the sum of the digital roots of the individual factors of a number. For example, given $n=24$, then the factorization $2\cdot 2 \cdot 2 \cdot 3$ yields $DRS(24) = DR(2)+ DR(2) + DR(2) + DR(3) = 9$. The *maximum digital room sum* of n (denoted by $mdrs(n))$ is the maximum $DRS(n)$ of all possible factorizations of $n$.
+
+The goal of this question is to compute $mdrs(n)$ for $n = 2, \dots, 999999$.
+
+**** Examples
+To get a better of the problem at hand, let's go over some (bruteforced) examples. We first compute the digital roots of all numbers below 1 million, define the function =factors= to compute all factorizations of a number $n$ and then define functions =DRS= to compute the digital root sum given a factorization. It's quite a messy code, but in the end we will be using the function =compute_all_DRS= to compute the list of factorizations and correspond DRS for a number $n$.
+
+#+BEGIN_SRC python :results output :session p159
+from sympy import factorint
+from itertools import combinations
+from collections import defaultdict
+import itertools
+from tqdm import tqdm
+
+
+def compute_all_dr(N):
+    """Compute the digital roots of all numbers below N."""
+    def add_digits(n):
+        """Adds the digits of a number n."""
+        return sum([int(d) for d in str(n)])
+
+    DR = dict()
+    for i in range(N):
+        x = i
+        while int(x) > 9:
+            x = add_digits(x)
+            if x in DR:
+                x = DR[x]
+                break
+        DR[i] = x
+
+    return DR
+
+
+def factors(n):
+    """Compute all factorizations of a number n. Code from:
+   https://stackoverflow.com/questions/21612287/algorithm-to-find-all-factorizations-of-an-integer
+    """
+    def mult(fs):
+        res = 1
+        for f in fs:
+            res *= f
+        return res
+
+    def _generate_all_factorizations(factors):
+        if len(factors) <= 1:
+            yield factors
+            return
+
+        for factors_in_mult in range(1, len(factors)+1):
+            for which_is in itertools.combinations(range(len(factors)), factors_in_mult):
+                this_mult = mult(factors[i] for i in which_is)
+                rest = [factors[i] for i in range(len(factors)) if i not in which_is]
+
+                for remaining in _generate_all_factorizations(rest):
+                    yield [this_mult] + remaining
+
+    def generate_all_factorizations(factors):
+        seen = set()
+        res = []
+        for f in _generate_all_factorizations(factors):
+            f = tuple(sorted(f))
+            if f in seen:
+                continue
+            seen.add(f)
+            yield f
+
+    flatten = lambda t: [item for sublist in t for item in sublist]
+    prime_factors = flatten([[k] * v for k, v in factorint(n).items()])
+    return generate_all_factorizations(prime_factors)
+
+
+DR = compute_all_dr(10**6)
+
+
+def DRS(factors):
+    """Computes the DRS given factorization."""
+    return sum([DR[x] for x in factors])
+
+
+def MDRS(n):
+    """Compute the maximum DRS of n."""
+    factorizations = factors(n)
+    return max([DRS(f) for f in factorizations])
+
+
+def compute_all_DRS(n):
+    """Computes all DRS of a number including factorization sorted."""
+    factorizations = factors(n)
+    return sorted([(DRS(f), f) for f in factorizations], reverse=True)
+
+
+def find_pairs(factors):
+    """Given a dictionary of factors, find all possible pairs of factors
+    that can be multiplied."""
+    singles = list(combinations([f for f, v in factors.items() if v >= 1], 2))
+    doubles = [(f, f) for f, v in factors.items() if v >= 2]
+    return singles + doubles
+
+
+def DRS_dict(factors):
+    """Computes the DRS given a dictionary factorization."""
+    return sum([DR[n] * power for n, power in factors.items()])
+
+
+def compute_mdrs(n):
+    L = []
+    def improve(factors):
+        """Recursively multiply two factors as long as it does not decrease
+        the digital root sum of the factors."""
+        factors = defaultdict(int, factors)
+        improvement = 0
+        for a, b in find_pairs(factors):
+            c = a*b
+            if DR[c] >= DR[a] + DR[b]:
+                new_factors = factors.copy()
+                new_factors[a] -= 1
+                new_factors[b] -= 1
+                new_factors[c] += 1
+                improvement += 1
+                improve(new_factors)
+        if not improvement:
+            L.append(factors)
+    improve(factorint(n))
+    return max([DRS_dict(f) for f in L])
+
+
+total = 0
+for n in tqdm(range(2, 10**6)):
+    total += compute_mdrs(n)
+#+END_SRC
+
+#+RESULTS:
+
+Before we try some programming examples, let's first do some theoretical analysis. Given the prime factorization of a number, what should we do to maximize the digital root sum? Consider the prime factors $2$, $3$, $5$ and $7$ with any power/multiplicity. Observe that:
+- It's good to make $8$ from $2^3$, since $DR(8) = 8$ and $3DR(2) = 6$.
+- Similarly, it's always good to make $9$ from $3^2$, since $DR(9) = 9$ and $2DR(3) = 6$.
+- How about $5$? Here it's better to leave any multiple of $5$ as is, because $DR(25) = 7$ and $2DR(5) = 10$.
+- What about $7$? Again, it's better to leave any multiple of $7$ as is, because $DR(49) = 4$ and $2DR(7) = 14$.
+
+This means that whenever we have any multiple of $2^3$ or $3^2$, then changing those to $8$ and $9$ respectively always yields a better digital root sum. For $5$ and $7$, it's better to leave them as is. But what if we have the factorization $2, 5^2, 13$ for instance?
+- Should we leave this factorization as is, then we get $DRS = 2 + 5 + 5 + 4 = 16.$
+- If we factorize $2 \cdot 13 = 26$, then we obtain $DRS = 5 + 5 + 8 = 18.$
+- All other options will not yield better results.
+
+Hmm, interesting. It actually makes sense what is happening here. It's good to multiply two factors into a new factor /if/ the new factor yields a higher digital root. In this example, $DR(2*13) > DR(2) + DR(13)$. But it wouldn't be good to multiply $2$ and $17$ since $DR(2*17) = DR(34) = 7$ while $DR(2) + DR(17) = 10$.
+
+Consider another case where we have the prime factors $2^3$ and $13^3$. It can be computed that $26*26*26$ is the best factorization which yields $24$ as the maximum digital room sum.
+
+The above examples suggest that we need to design an algorithm that always computes the best local improvements of two items multiplied together. Let's verify that with some examples:
+
+#+BEGIN_SRC python :results output :session p159
+from pprint import pprint
+
+pprint(compute_all_DRS(24))
+#+END_SRC
+
+#+RESULTS:
+: [(11, (3, 8)),
+:  (10, (4, 6)),
+:  (10, (2, 2, 6)),
+:  (9, (2, 3, 4)),
+:  (9, (2, 2, 2, 3)),
+:  (6, (24,)),
+:  (5, (2, 12))]
+
+#+BEGIN_SRC python :results output :session p159
+from pprint import pprint
+
+pprint(compute_all_DRS(424))
+#+END_SRC
+
+#+RESULTS:
+: [(16, (8, 53)),
+:  (14, (2, 4, 53)),
+:  (14, (2, 2, 2, 53)),
+:  (11, (4, 106)),
+:  (11, (2, 2, 106)),
+:  (7, (2, 212)),
+:  (1, (424,))]
+
+Trying more example show that we can always get from the prime factorization to the factorization that attains the maximum digital root sum using only local improvements.
+
+
 
 *** [[https://projecteuler.net/problem=183][Problem 183: Maximum product of parts]] :optimization:
 This question has bothered me for quite a long time. When I looked at this problem for the first time, I thought it would be a simple convex optimization problem which I could solve using =cvxpy= or some other convex solver. However, not realizing that I could rewrite the optimization problem, I became stuck and never managed to do this.
@@ -276,6 +466,73 @@ Without any optimizations, my algorithm took about 15 minutes to finish. I did s
 
 As mentioned on the discussion board, it should be possible to get a pure python code to run in under 1 minute but it will require more optimizations. More specifically, computing =is_black= could be optimized much further (for example, a pre-computed table for (x, y) values for which the coordinates are guaranteed to be black).
 
+*** [[https://projecteuler.net/problem=333][Problem 333: Special partitions]] :bruteforce:recursion:
+My most important observations are:
+- There are not so many numbers below $N$ that can be expressed *only* as $2^i*3^j$. So we might want to pre-compute all these numbers. We call such numbers *partition numbers*.
+- Given two partition numbers $x$ and $y$, when do they divide each other? By the unique prime factorization theorem, we know $x | y$ if both exponents of $x$ are less or equal element-wise than the exponents of $y$. To give an example: $1=2^0x3^0$ divides $16=2^4x3^0$ because $0 \leq 4$ and $0 \leq 0$. We call $x$ and $y$ *neighbors* if $x$ does not divide $y$ or $y$ does not divide $x$.
+
+With this, we can simply create a tree for each $p$ to brute-force all possible legible sets of partition numbers.
+
+<2020-11-11 Wed> The case for n = 100 is solved, but it takes way too long to solve n = 10^6.
+
+#+BEGIN_SRC python :results output
+from collections import defaultdict
+from sympy import sieve
+threshold = 1000000
+
+# This should give me all legitimate partitioning numbers
+L = []
+for i in range(30):
+    for j in range(20):
+        x = 2**i*3**j
+        if x <= threshold:
+            L.append([x, i, j])
+
+L = sorted(L[1:])
+
+# Which numbers can be put together?
+# Def: neighbors
+neighbors = defaultdict(list)
+for (n, i, j) in L:
+    for (m, x, y) in L:
+        if i <= x and j <= y or x <= i and y <= j:
+            pass
+        else:
+            neighbors[n].append(m)
+
+# For certain p, recursively check if I can make it.
+def intersection(L1, L2):
+    return [x for x in L1 if x in L2]
+
+
+def P(q):
+    total = 0
+    def partition(p, last, candidates):
+        if p == 0:
+            nonlocal total
+            total += 1
+        elif candidates:
+            for n in candidates:
+                if last >= n and p >= n:
+                    new_candidates = intersection(candidates, neighbors[n])
+                    partition(p-n, n, new_candidates)
+        else:
+            pass
+    for (x, i, j) in L:
+        if x <= q:
+            partition(q-x, x, neighbors[x])
+    return total
+
+Q = [q for q in sieve.primerange(2, 300) if P(q) == 1]
+print(sum(Q), Q)
+
+
+#+END_SRC
+
+#+RESULTS:
+: 1160 [2, 3, 5, 7, 13, 17, 23, 43, 59, 61, 113, 181, 193, 199, 241]
+
+<2020-12-25 Fri> We need to take a different approach. Instead of checking $P(q)$ for every $q$ individually, we should construct all possible partitions. Using a constructive approach, we can write a recursion that starts at any feasible partition number $2^i3^j$ and then recursively considers all neighbours $2^(i-x)3^(j-y)$ to start new partial sums that can be recursively computed. I think this way we consider all distinct valid partitions. To be honest, I'm not 100% certain about the mathematics behind this, but it managed to compute the right answer within 1 minute.
 *** [[https://projecteuler.net/problem=389][Problem 389: Platonic Dice]]        :probability:dp:generating_functions:
 We want to calculate the variance of a random variable $X$, which is given by $$Var(X) = \sum_{i=1}^n P(X=x_i)(x_i-\mu)^2,$$ where $x_i$ are the possible outcomes of $X$ for all $i=1, \dots, n$.
 
@@ -321,200 +578,74 @@ Although my algorithm doesn't run so fast (about 15 minutes), it does compute th
 
 ** Work in progress
 *** Definitions
-- #A :: Beginning of solution
+- #A :: Beginning of solution/stuck somewhere
 - #B :: Solution known
 - #C :: Solution known and implemented, but contains some unidentified errors
-*** [[https://projecteuler.net/problem=159][Problem 159: Digital root sums of factorisations]] :greedy:
-This solution will be described in a more exploratory fashion, since I don't directly see the clear mathematical concepts needed to solve the problem. I'll go over the definitions, program some base cases and hopefully understand the problem in the process of exploring.
+*** [[https://projecteuler.net/problem=516][Problem 516: 5-smooth totients]]
+There are several formulas for computing $\phi(n)$, but the one that we need is called the *Euler's product formula*. It states that for any number $n$ with prime factorization $n=p_1^{k_1}p_2^{k_2}\dots p_r^{k_r}$, then the totient function is given by
+$$\phi(n) = p_1^{k_1-1}(p_1-1)p_2^{k_2-1}(p_2-1)\dots p_r^{k_r-1}(p_r-1)$$. This identity can be used to show the following: $\phi(n)$ is a Hamming number if and only if all prime factors of $n$ are $2$, $3$, $5$ or any $p$ is at most multiplicity 1 and $p-1$ is a Hamming number.
 
-**** Definitions
-Let's start with restating the definitions used in this problem. Given a number $n$, the *digital root* of $n$ denoted by $DR(n)$ is found by adding together the digits of that number and repeating that process until a number is arrived at that is less than $10$. For example, $DR(8)=8, DR(11)=2$ and $DR(467) = 8$.
+For example, $n=42=2*3*7$ and $\phi(n) = 12 = 2^2*3$, which is a Hamming number, since $7$ has at multiplicity one and $7-1$ is a Hamming number.
 
-The *digital root sum* of $n$ (denoted by $DRS(n)$) given some factorization of $n$ is the sum of the digital roots of the individual factors of a number. For example, given $n=24$, then the factorization $2\cdot 2 \cdot 2 \cdot 3$ yields $DRS(24) = DR(2)+ DR(2) + DR(2) + DR(3) = 9$. The *maximum digital room sum* of n (denoted by $mdrs(n))$ is the maximum $DRS(n)$ of all possible factorizations of $n$.
-
-The goal of this question is to compute $mdrs(n)$ for $n = 2, \dots, 999999$.
-
-**** Examples
-To get a better of the problem at hand, let's go over some (bruteforced) examples. We first compute the digital roots of all numbers below 1 million, define the function =factors= to compute all factorizations of a number $n$ and then define functions =DRS= to compute the digital root sum given a factorization. It's quite a messy code, but in the end we will be using the function =compute_all_DRS= to compute the list of factorizations and correspond DRS for a number $n$.
-
-#+BEGIN_SRC python :results output :session p159
-from sympy import factorint
-from itertools import combinations
-from collections import defaultdict
-import itertools
-from tqdm import tqdm
-
-
-def compute_all_dr(N):
-    """Compute the digital roots of all numbers below N."""
-    def add_digits(n):
-        """Adds the digits of a number n."""
-        return sum([int(d) for d in str(n)])
-
-    DR = dict()
-    for i in range(N):
-        x = i
-        while int(x) > 9:
-            x = add_digits(x)
-            if x in DR:
-                x = DR[x]
-                break
-        DR[i] = x
-
-    return DR
-
-
-def factors(n):
-    """Compute all factorizations of a number n. Code from:
-   https://stackoverflow.com/questions/21612287/algorithm-to-find-all-factorizations-of-an-integer
-    """
-    def mult(fs):
-        res = 1
-        for f in fs:
-            res *= f
-        return res
-
-    def _generate_all_factorizations(factors):
-        if len(factors) <= 1:
-            yield factors
-            return
-
-        for factors_in_mult in range(1, len(factors)+1):
-            for which_is in itertools.combinations(range(len(factors)), factors_in_mult):
-                this_mult = mult(factors[i] for i in which_is)
-                rest = [factors[i] for i in range(len(factors)) if i not in which_is]
-
-                for remaining in _generate_all_factorizations(rest):
-                    yield [this_mult] + remaining
-
-    def generate_all_factorizations(factors):
-        seen = set()
-        res = []
-        for f in _generate_all_factorizations(factors):
-            f = tuple(sorted(f))
-            if f in seen:
-                continue
-            seen.add(f)
-            yield f
-
-    flatten = lambda t: [item for sublist in t for item in sublist]
-    prime_factors = flatten([[k] * v for k, v in factorint(n).items()])
-    return generate_all_factorizations(prime_factors)
-
-
-DR = compute_all_dr(10**6)
-
-
-def DRS(factors):
-    """Computes the DRS given factorization."""
-    return sum([DR[x] for x in factors])
-
-
-def MDRS(n):
-    """Compute the maximum DRS of n."""
-    factorizations = factors(n)
-    return max([DRS(f) for f in factorizations])
-
-
-def compute_all_DRS(n):
-    """Computes all DRS of a number including factorization sorted."""
-    factorizations = factors(n)
-    return sorted([(DRS(f), f) for f in factorizations], reverse=True)
-
-
-def find_pairs(factors):
-    """Given a dictionary of factors, find all possible pairs of factors
-    that can be multiplied."""
-    singles = list(combinations([f for f, v in factors.items() if v >= 1], 2))
-    doubles = [(f, f) for f, v in factors.items() if v >= 2]
-    return singles + doubles
-
-
-def DRS_dict(factors):
-    """Computes the DRS given a dictionary factorization."""
-    return sum([DR[n] * power for n, power in factors.items()])
-
-
-def compute_mdrs(n):
-    L = []
-    def improve(factors):
-        """Recursively multiply two factors as long as it does not decrease
-        the digital root sum of the factors."""
-        factors = defaultdict(int, factors)
-        improvement = 0
-        for a, b in find_pairs(factors):
-            c = a*b
-            if DR[c] >= DR[a] + DR[b]:
-                new_factors = factors.copy()
-                new_factors[a] -= 1
-                new_factors[b] -= 1
-                new_factors[c] += 1
-                improvement += 1
-                improve(new_factors)
-        if not improvement:
-            L.append(factors)
-    improve(factorint(n))
-    return max([DRS_dict(f) for f in L])
-
-
-total = 0
-for n in tqdm(range(2, 10**6)):
-    total += compute_mdrs(n)
-#+END_SRC
+The pseudocode is as follows:
+- Compute all prime factors s.t. $p-1$ is a Hamming number. Denote this as set $P$.
+- Compute all possible products of $\{2, 3, 5\} \cup P$, whose sum should not exceed $10^12$. This can be easily done using recursion, but for performance reasons its best to consider the aforementioned set in reverse order.
 
 #+RESULTS:
 
-Before we try some programming examples, let's first do some theoretical analysis. Given the prime factorization of a number, what should we do to maximize the digital root sum? Consider the prime factors $2$, $3$, $5$ and $7$ with any power/multiplicity. Observe that:
-- It's good to make $8$ from $2^3$, since $DR(8) = 8$ and $3DR(2) = 6$.
-- Similarly, it's always good to make $9$ from $3^2$, since $DR(9) = 9$ and $2DR(3) = 6$.
-- How about $5$? Here it's better to leave any multiple of $5$ as is, because $DR(25) = 7$ and $2DR(5) = 10$.
-- What about $7$? Again, it's better to leave any multiple of $7$ as is, because $DR(49) = 4$ and $2DR(7) = 14$.
+*** TODO [[https://projecteuler.net/problem=725][Problem 725: Digit sum numbers]]
+#+BEGIN_SRC python :results output
+import numpy as np
 
-This means that whenever we have any multiple of $2^3$ or $3^2$, then changing those to $8$ and $9$ respectively always yields a better digital root sum. For $5$ and $7$, it's better to leave them as is. But what if we have the factorization $2, 5^2, 13$ for instance?
-- Should we leave this factorization as is, then we get $DRS = 2 + 5 + 5 + 4 = 16.$
-- If we factorize $2 \cdot 13 = 26$, then we obtain $DRS = 5 + 5 + 8 = 18.$
-- All other options will not yield better results.
 
-Hmm, interesting. It actually makes sense what is happening here. It's good to multiply two factors into a new factor /if/ the new factor yields a higher digital root. In this example, $DR(2*13) > DR(2) + DR(13)$. But it wouldn't be good to multiply $2$ and $17$ since $DR(2*17) = DR(34) = 7$ while $DR(2) + DR(17) = 10$.
+def p725(N, M):
+    DS = np.zeros((N+1, 10, 10))
 
-Consider another case where we have the prime factors $2^3$ and $13^3$. It can be computed that $26*26*26$ is the best factorization which yields $24$ as the maximum digital room sum.
+    for n in range(N):
+        for l in range(10):
+            for s in range(10):
+                # Create base case
+                if n == 0 and l == s:
+                    DS[n+1][l][s] = 1
+                else:
+                    for d in range(10):
+                        if s + d <= 9:
+                            DS[n+1][max(l, d)][s+d] += DS[n][l][s] % M
 
-The above examples suggest that we need to design an algorithm that always computes the best local improvements of two items multiplied together. Let's verify that with some examples:
+    total = 0
+    for n in range(N+1):
+        for l in range(1, 10):
+            for s in range(1, 10):
+                total = (total + DS[n][l][s] * l) % M
+    print(total)
+    return DS
 
-#+BEGIN_SRC python :results output :session p159
-from pprint import pprint
 
-pprint(compute_all_DRS(24))
 #+END_SRC
 
-#+RESULTS:
-: [(11, (3, 8)),
-:  (10, (4, 6)),
-:  (10, (2, 2, 6)),
-:  (9, (2, 3, 4)),
-:  (9, (2, 2, 2, 3)),
-:  (6, (24,)),
-:  (5, (2, 12))]
+*** TODO [#A] [[https://projecteuler.net/problem=710][Problem 710: One Million Members]]
+**** Generalization palindromic sums
+For ease of explanation, disregard the notion of twopals for now. For any number $n$, we can find palindromic sums of size $k$ for $k=1, \dots, n$. The palindromic sum of size $1$ is trivial, which is the number $n$ itself. The palindromic sum of size $2$ is only possible if $n$ is even, which is then $(n/2, n/2)$. If the number is uneven, then we cannot divide it in two even parts (and thus create palindromic tuples).
 
-#+BEGIN_SRC python :results output :session p159
-from pprint import pprint
+Let's move on to the less trivial examples. For now consider only even numbers $n$. A palindromic sum of size $3$ will have the form $(b, a, b)$, where $a \leq n-2$ and $2b = n-a$. From this, we can see that $a$ must be even as well, otherwise we can't find $b$.
 
-pprint(compute_all_DRS(424))
-#+END_SRC
+A palindromic sum of size $4$ is of the form $(b, a, a, b)$, such that $a + b = n/2$. How many numbers can we find to make $a+b = n/2$? This is known as the $k-composition$, that is, the number of ways of writing $n$ as the sum of a sequence of $k$ strictly positive integers. It is related to the *stars and bars* problem, which is a common problem in statistical physics. The formula for the $k$ composition of $n$ is given as $\binom{n-1}{k-1}$, so this means that we can write $n/2$ in exactly $n/2$ ways using only $2$ positive integers.
 
-#+RESULTS:
-: [(16, (8, 53)),
-:  (14, (2, 4, 53)),
-:  (14, (2, 2, 2, 53)),
-:  (11, (4, 106)),
-:  (11, (2, 2, 106)),
-:  (7, (2, 212)),
-:  (1, (424,))]
+The palindromic sum of size $5$ is of the form $(c, b, a, b, c)$, where $a \leq n-2$ and $a$ even. Then it remains to find the number of $2$-compositions of $(n-a)/2$, that is, in how many ways can we write $c + b = (n-a)/2$? Similar to the previous case, this is given as exactly $(n-a)/2$.
 
-Trying more example show that we can always get from the prime factorization to the factorization that attains the maximum digital root sum using only local improvements.
+Let's consider the final example for a palindromic sum of size $6$, which is of the form $(c, b, a, a, b, c)$. We are now interested in finding the number of $3$-composition such that we obtain $n/2$, which is given by the expression $\binom{n/2}{2}$.
 
+So far we have only considered the case for even $n$. Generalizing this to uneven $n$ is relatively simple by only noting some small differences. If the size of the palindrome $k$ is uneven, then the middle element (which is $a$ in our examples) must be uneven as well. If the size of the palindrome $k$ is even, then we cannot find such palindromic tuples.
 
+**** Twopals
+Now that we have a firm grasp of the palindromic tuples, we can introduce the notion of twopals. A *twopal* is defined as a palindromic tuple having at least one element with a value of $2$. How can we restrict palindromic tuples to only count twopals?
 
+Without going over each example in the previous section, consider the case that $n$ is even and consider the $k=7$ and $k=8$ palindromic tuples. In the $k=7$ case, since $k$ is uneven, the have a middle element which we shall call $a$ as before. This element must be even, and hence, it is either $2$ or another even number. Suppose that $a$ is two, then any palindromic tuple obtained by finding the $3$-combination of $(n-2)/2$ is a twopal. If $a$ is not two, then we cannot freely choose any $3$-composition, as we need at least one $2$ to occur. Thus, we fix one number to be $2$ and freely choose and $2$-composition of $(n-2)/2-2$.
+
+**** TODO Here is where I get stuck: the problem with fixing 2 is that we also need to consider the permutations. However, we do not know how many 2s occur in the 2-compositions, because if that is the case, we need to consider less permutations. For instance, (2,3,1) has 3 permutations, but (2,2,2) has only 1 permutation. We need to count the number of 2-compositions that include $i$ 2s. Actually, this is not enough. We need to consider all the 2-compositions that might have repeated digits (including 2) to count the number of distinct ways. Ahhh...
+
+**** TODO Example with $n=6$
+Let's work out the example in more detail, where we want to find all twopals of $n=6$. For any number $n$, there are n
 
 *** TODO [[https://projecteuler.net/problem=209][Problem 209: Circular Logic]]
 **** Definitions
@@ -872,73 +1003,6 @@ print(totient_factors(Counter(factorint(1800))))
 : {2: 3, 3: 2, 5: 2}
 : Counter({2: 5, 3: 1, 5: 1})
 
-*** TODO [[https://projecteuler.net/problem=333][Problem 333: Special partitions]]                       :bruteforce:
-My most important observations are:
-- There are not so many numbers below $N$ that can be expressed *only* as $2^i*3^j$. So we might want to pre-compute all these numbers. We call such numbers *partition numbers*.
-- Given two partition numbers $x$ and $y$, when do they divide each other? By the unique prime factorization theorem, we know $x | y$ if both exponents of $x$ are less or equal element-wise than the exponents of $y$. To give an example: $1=2^0x3^0$ divides $16=2^4x3^0$ because $0 \leq 4$ and $0 \leq 0$. We call $x$ and $y$ *neighbors* if $x$ divides $y$ or $y$ divides $x$.
-
-With this, we can simply create a tree for each $p$ to brute-force all possible legible sets of partition numbers.
-
-<2020-11-11 Wed> The case for n = 100 is solved, but it takes way too long to solve n = 10^6. In my current estimates, it would take about 17 hours. Not sure why it would take so long..
-- How can we skip some prime numbers?
-
-
-#+BEGIN_SRC python :results output
-from collections import defaultdict
-from sympy import sieve
-threshold = 1000000
-
-# This should give me all legitimate partitioning numbers
-L = []
-for i in range(30):
-    for j in range(20):
-        x = 2**i*3**j
-        if x <= threshold:
-            L.append([x, i, j])
-
-L = sorted(L[1:])
-
-# Which numbers can be put together?
-# Def: neighbors
-neighbors = defaultdict(list)
-for (n, i, j) in L:
-    for (m, x, y) in L:
-        if i <= x and j <= y or x <= i and y <= j:
-            pass
-        else:
-            neighbors[n].append(m)
-
-# For certain p, recursively check if I can make it.
-def intersection(L1, L2):
-    return [x for x in L1 if x in L2]
-
-
-def P(q):
-    total = 0
-    def partition(p, last, candidates):
-        if p == 0:
-            nonlocal total
-            total += 1
-        elif candidates:
-            for n in candidates:
-                if last >= n and p >= n:
-                    new_candidates = intersection(candidates, neighbors[n])
-                    partition(p-n, n, new_candidates)
-        else:
-            pass
-    for (x, i, j) in L:
-        if x <= q:
-            partition(q-x, x, neighbors[x])
-    return total
-print(sum([q for q in sieve.primerange(2, 100) if P(q) == 1]))
-
-
-#+END_SRC
-
-#+RESULTS:
-: 233
-
-***
 
 *** TODO [[https://projecteuler.net/problem=336][Problem 336: Maximix Arrangements]]
 Given configurations of 11 carriages:
@@ -950,7 +1014,7 @@ How can we sort the train most efficiently according to Simon's strategy? Given 
 For example, consider 'beacd'. We would like to sort 'a' to the right position. Since a is not at the last index, we will split the string in two by splitting in front of the letter a: 'be' and 'acd'. Next, we reverse 'acd' to 'dca' and glue the substrings back to get 'bedca'. Finally, we reverse that string to obtain 'acdeb'. We can continue this for the remainder unsorted substring 'cdeb' to calculate the number of moves needed.
 
 See code below for the sorting mechanism.
-#+BEGIN_SRC python :results output :session p333
+#+BEGIN_SRC python :results output :session p336
 from itertools import permutations
 
 N = 6
@@ -1104,7 +1168,7 @@ N = 6
  ('F', 'B', 'D', 'C', 'A', 'E')]
 #+END_SRC
 
-#+BEGIN_SRC python :results output :session p333
+#+BEGIN_SRC python :results output :session p336
 
 
 #+END_SRC
