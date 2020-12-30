@@ -16,6 +16,9 @@ I write most of my solutions in Python. In some cases, I have written code in di
 
 * Resources
 There are many great resources that have helped me to solve Project Euler problems. I believe that looking at these resources is beneficial, especially if I know that there is some mathematical/programming technique I didn't know about before. Here is a shortlist of resources that I deem most valuable:
+** Solutions
 - [[https://www.nayuki.io/page/project-euler-solutions][ProjectNayuki]] :: Over 200+ solutions mostly written in Python.
 - [[https://euler.stephan-brumme.com/][Stephan Brumme]] :: Over 300+ solutions including explanations.
 - [[https://github.com/luckytoilet/projecteuler-solutions][Lucky Toilet]] :: All numerical answers to Project Euler.
+** Guides
+- [[https://fishi.devtail.io/weblog/2015/06/25/computing-large-binomial-coefficients-modulo-prime-non-prime/][Computing large binomial coefficients modulo prime]] :: When going into problems above 300, most often we need to compute the solution modulo a prime number. This guide explains how to compute binomial coefficients modulo prime, where Little Fermat's Theorem and Lucas' Theorem will come in handy.
