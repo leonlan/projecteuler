@@ -1,0 +1,9 @@
+* Instruction
+Install Julia and run the following command in your terminal:
+#+BEGIN_SRC bash
+julia pe###.jl
+#+END_SRC
+* Requirements
+#+BEGIN_SRC
+import Pkg; Pkg.add("Primes")
+#+END_SRC
