@@ -548,6 +548,17 @@ $$I(x) = D\left(\frac1{20} \sum_{k=1}^{20} x^k\right)$$
 $$V = I''(1) + I'(1) - I'(1)^2$$
 which is really cool. I don't know enough about it, but I'll be sure to refer to this once I need it again.
 
+*** [[https://projecteuler.net/problem=516][Problem 516: 5-smooth totients]] :totient:recursion:
+There are several formulas for computing $\phi(n)$, but the one that we need is called the *Euler's product formula*. It states that for any number $n$ with prime factorization $n=p_1^{k_1}p_2^{k_2}\dots p_r^{k_r}$, then the totient function is given by
+$$\phi(n) = p_1^{k_1-1}(p_1-1)p_2^{k_2-1}(p_2-1)\dots p_r^{k_r-1}(p_r-1)$$. This identity can be used to show the following: $\phi(n)$ is a Hamming number if and only if all prime factors of $n$ are $2$, $3$, $5$ or any $p$ is at most multiplicity 1 and $p-1$ is a Hamming number.
+
+For example, $n=42=2*3*7$ and $\phi(n) = 12 = 2^2*3$, which is a Hamming number, since $7$ has at multiplicity one and $7-1$ is a Hamming number.
+
+The pseudocode is as follows:
+- Compute all prime factors s.t. $p-1$ is a Hamming number. Denote this as set $P$.
+- Compute all possible products of $\{2, 3, 5\} \cup P$, whose sum should not exceed $10^12$. This can be easily done using recursion, but for performance reasons its best to consider the aforementioned set in reverse order.
+
+#+RESULTS:
 *** [[https://projecteuler.net/problem=650][Problem 650: Divisors of Binomial Product]] :binom:
 **** Definitions
 For the sake of readability, let's repeat the definitions from the problem here. Let $$B(n) = \displaystyle \prod_{k=0}^n {n \choose k}$$ be the product of binominal coefficients, let $$D(n) = \displaystyle \sum_{d|B(n)} d$$ be the sum of divisors of $B(n)$, and let $$S(n) = \displaystyle \sum_{k=1}^n D(k)$$ be the sum of all $D(k)$ up to $n$. The goal is to compute $S(20000)$, which suggests that we are allowed to find a $O(n^2)$ algorithm.
@@ -581,17 +592,12 @@ Although my algorithm doesn't run so fast (about 15 minutes), it does compute th
 - #A :: Beginning of solution/stuck somewhere
 - #B :: Solution known
 - #C :: Solution known and implemented, but contains some unidentified errors
-*** [[https://projecteuler.net/problem=516][Problem 516: 5-smooth totients]]
-There are several formulas for computing $\phi(n)$, but the one that we need is called the *Euler's product formula*. It states that for any number $n$ with prime factorization $n=p_1^{k_1}p_2^{k_2}\dots p_r^{k_r}$, then the totient function is given by
-$$\phi(n) = p_1^{k_1-1}(p_1-1)p_2^{k_2-1}(p_2-1)\dots p_r^{k_r-1}(p_r-1)$$. This identity can be used to show the following: $\phi(n)$ is a Hamming number if and only if all prime factors of $n$ are $2$, $3$, $5$ or any $p$ is at most multiplicity 1 and $p-1$ is a Hamming number.
+*** TODO [[https://projecteuler.net/problem=211][Problem 211: Divisor Square Sum]]
+Let $\sigma_2(n)$ denote the sum of squares of the divisors of $n$. The closed form expression for $\sigma_2(n)$ is given by $$\sigma_2(n) = \prod_{i=1}^{r} \frac{p_i^{2\alpha_i+2}-1}{p^2_i -1},$$ where $p_i$ is the $i-$th prime factor and $\alpha_i$ is the corresponding multiplicity.
 
-For example, $n=42=2*3*7$ and $\phi(n) = 12 = 2^2*3$, which is a Hamming number, since $7$ has at multiplicity one and $7-1$ is a Hamming number.
+We need to find all $n$ such that $\sigma_2(n)$ is a perfect square. This is only the case if and only $\sqrt{\sigma_2}$ is an integer, which applied to the above expression gives $$\sqrt{\sigma_2(n)} = \sqrt{\prod_{i=1}^{r} \frac{p_i^{2\alpha_i+2}-1}{p^2_i -1}} = \prod_{i=1}^{r} \sqrt{\frac{p_i^{2\alpha_i+2}-1}{p^2_i -1}}.$$.
 
-The pseudocode is as follows:
-- Compute all prime factors s.t. $p-1$ is a Hamming number. Denote this as set $P$.
-- Compute all possible products of $\{2, 3, 5\} \cup P$, whose sum should not exceed $10^12$. This can be easily done using recursion, but for performance reasons its best to consider the aforementioned set in reverse order.
-
-#+RESULTS:
+Note that $\sigma_2(n)$ is multiplicative.
 
 *** TODO [[https://projecteuler.net/problem=725][Problem 725: Digit sum numbers]]
 #+BEGIN_SRC python :results output
@@ -1003,6 +1009,8 @@ print(totient_factors(Counter(factorint(1800))))
 : {2: 3, 3: 2, 5: 2}
 : Counter({2: 5, 3: 1, 5: 1})
 
+*** TODO [[https://projecteuler.net/problem=442][Problem 442: Eleven-free integers]]
+Here is a suggested DP solution: https://stackoverflow.com/a/20791713
 
 *** TODO [[https://projecteuler.net/problem=336][Problem 336: Maximix Arrangements]]
 Given configurations of 11 carriages:

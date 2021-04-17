@@ -22,17 +22,13 @@ def p204(N, k):
         # Compute all powers of p up to N
         for new in powers_up_to(p, N):
             curr.add(new)
-            # print(p, new)
 
         # Use the previous type Hamming numbers to compute the current ones
         if i > 0:
             for nums in prev:
                 for new in powers_up_to(p, ceil(N/nums)+1):
                     curr.add(new*nums)
-
-
         prev = curr.copy()
-        # print(sorted(list(curr)))
 
     # Return the number of Hamming numbers
     # Correct the length for the incorrectness of powers_up_to function
